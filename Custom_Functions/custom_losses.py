@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
-'''
-This file contains the definitions of custom loss functions not present in the default Keras.
-'''
+
+import sys
+sys.path.append('./')
+sys.path.append('../')
+sys.path.append('../Models/')
+sys.path.append('../Model_Helpers/')
+sys.path.append('../Data_Loader/')
 
 import tensorflow as tf
 
-def dice_soft(y_true, y_pred, loss_type='sorensen', axis=[1,2,3], smooth=1e-5, from_logits=False):
+
+def dice_soft(
+    y_true, y_pred, loss_type="sorensen", axis=[1, 2, 3], smooth=1e-5, from_logits=False
+):
     """Soft dice (Sørensen or Jaccard) coefficient for comparing the similarity
     of two batch of data, usually be used for binary image segmentation
     i.e. labels are binary. The coefficient between 0 to 1, 1 means totally match.
@@ -44,10 +51,10 @@ def dice_soft(y_true, y_pred, loss_type='sorensen', axis=[1,2,3], smooth=1e-5, f
         y_pred = tf.math.log(y_pred / (1 - y_pred))
 
     inse = tf.reduce_sum(input_tensor=y_pred * y_true, axis=axis)
-    if loss_type == 'jaccard':
+    if loss_type == "jaccard":
         l = tf.reduce_sum(input_tensor=y_pred * y_pred, axis=axis)
         r = tf.reduce_sum(input_tensor=y_true * y_true, axis=axis)
-    elif loss_type == 'sorensen':
+    elif loss_type == "sorensen":
         l = tf.reduce_sum(input_tensor=y_pred, axis=axis)
         r = tf.reduce_sum(input_tensor=y_true, axis=axis)
     else:
@@ -57,13 +64,13 @@ def dice_soft(y_true, y_pred, loss_type='sorensen', axis=[1,2,3], smooth=1e-5, f
     # epsilon = 1e-5
     # dice = tf.clip_by_value(dice, 0, 1.0-epsilon) # if all empty, dice = 1
     ## new haodong
-    dice = (2. * inse + smooth) / (l + r + smooth)
+    dice = (2.0 * inse + smooth) / (l + r + smooth)
     ##
     dice = tf.reduce_mean(input_tensor=dice)
     return dice
 
 
-def dice_hard(y_true, y_pred, threshold=0.5, axis=[1,2,3], smooth=1e-5):
+def dice_hard(y_true, y_pred, threshold=0.5, axis=[1, 2, 3], smooth=1e-5):
     """Non-differentiable Sørensen–Dice coefficient for comparing the similarity
     of two batch of data, usually be used for binary image segmentation i.e. labels are binary.
     The coefficient between 0 to 1, 1 if totally match.
@@ -95,14 +102,15 @@ def dice_hard(y_true, y_pred, threshold=0.5, axis=[1,2,3], smooth=1e-5):
     # epsilon = 1e-5
     # hard_dice = tf.clip_by_value(hard_dice, 0, 1.0-epsilon)
     ## new haodong
-    hard_dice = (2. * inse + smooth) / (l + r + smooth)
+    hard_dice = (2.0 * inse + smooth) / (l + r + smooth)
     ##
     hard_dice = tf.reduce_mean(input_tensor=hard_dice)
     return hard_dice
 
 
 def dice_loss(y_true, y_pred, from_logits=False):
-    return 1-dice_soft(y_true, y_pred, from_logits=False)
+    return 1 - dice_soft(y_true, y_pred, from_logits=False)
+
 
 def weighted_binary_crossentropy_loss(pos_weight):
     # pos_weight: A coefficient to use on the positive examples.
@@ -125,18 +133,19 @@ def weighted_binary_crossentropy_loss(pos_weight):
             output = tf.clip_by_value(output, _epsilon, 1 - _epsilon)
             output = tf.math.log(output / (1 - output))
 
-        return tf.nn.weighted_cross_entropy_with_logits(labels=target,
-                                                       logits=output,
-                                                        pos_weight=pos_weight)
+        return tf.nn.weighted_cross_entropy_with_logits(
+            labels=target, logits=output, pos_weight=pos_weight
+        )
+
     return weighted_binary_crossentropy
 
 
 def margin_loss(margin=0.4, downweight=0.5, pos_weight=1.0):
-    '''
+    """
     Args:
         margin: scalar, the margin after subtracting 0.5 from raw_logits.
         downweight: scalar, the factor for negative cost.
-    '''
+    """
 
     def _margin_loss(labels, raw_logits):
         """Penalizes deviations from margin for each logit.
@@ -154,11 +163,17 @@ def margin_loss(margin=0.4, downweight=0.5, pos_weight=1.0):
         A tensor with cost for each data point of shape [batch_size].
         """
         logits = raw_logits - 0.5
-        positive_cost = pos_weight * labels * tf.cast(tf.less(logits, margin),
-                                       tf.float32) * tf.pow(logits - margin, 2)
-        negative_cost = (1 - labels) * tf.cast(
-          tf.greater(logits, -margin), tf.float32) * tf.pow(logits + margin, 2)
+        positive_cost = (
+            pos_weight
+            * labels
+            * tf.cast(tf.less(logits, margin), tf.float32)
+            * tf.pow(logits - margin, 2)
+        )
+        negative_cost = (
+            (1 - labels)
+            * tf.cast(tf.greater(logits, -margin), tf.float32)
+            * tf.pow(logits + margin, 2)
+        )
         return 0.5 * positive_cost + downweight * 0.5 * negative_cost
 
     return _margin_loss
-
