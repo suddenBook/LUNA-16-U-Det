@@ -1,0 +1,13 @@
+numpy
+pandas
+matplotlib
+SimpleITK
+keras
+argparse
+tqdm
+glob
+ipywidgets
+tensorflow
+tensorflow-addons
+seaborn
+blosc
