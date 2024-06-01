@@ -1,49 +1,28 @@
-"""
-This is a helper file for choosing which model to create.
-"""
-
-import sys
-sys.path.append('./')
-sys.path.append('../')
-sys.path.append('../Models/')
-sys.path.append('../Data_Loader/')
-sys.path.append('../Custom_Functions/')
-
 import tensorflow as tf
 
+import sys
+sys.path.extend(['./','../','../Models/','../Data_Loader/','../Custom_Functions/'])
 
 def create_model(args, input_shape):
-    # If using CPU or single GPU
-    if args.gpus <= 1:
+    if args.gpus <= 1:  # CPU or single GPU
         if args.net == "udet":
-            from UDet import UDet
-
-            model = UDet(input_shape)
-            return [model]
-        if args.net == "bifpn":
-            from Encoder_BIFPN import BIFPN
-
-            model = BIFPN(input_shape)
-            return [model]
-        if args.net == "unet":
-            from unet import UNet
-
-            model = UNet(input_shape)
-            return [model]
+            from Models.UDet import UDet
+            return [UDet(input_shape, args.activation)]
+        elif args.net == "bifpn":
+            from Models.Encoder_BiFPN import BIFPN  
+            return [BIFPN(input_shape, args.activation == "mish")]
+        elif args.net == "unet":
+            from Models.UNet import UNet
+            return [UNet(input_shape, args.activation == "mish")]
         else:
-            raise Exception("Unknown network type specified: {}".format(args.net))
-    # If using multiple GPUs
-    else:
+            raise ValueError(f"Unknown network type: {args.net}")
+    else:  # Multiple GPUs
         with tf.device("/cpu:0"):
             if args.net == "udet":
-                from BIFPN import UDet
-
-                model = UDet(input_shape)
-                return [model]
-            if args.net == "unet":
-                from unet import UNet
-
-                model = UNet(input_shape)
-                return [model]
+                from Models.UDet import UDet
+                return [UDet(input_shape, args.activation)]  
+            elif args.net == "unet":
+                from Models.UNet import UNet  
+                return [UNet(input_shape, args.activation == "mish")]
             else:
-                raise Exception("Unknown network type specified: {}".format(args.net))
+                raise ValueError(f"Unknown network type: {args.net}")
