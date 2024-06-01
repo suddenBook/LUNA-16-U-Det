@@ -1,322 +1,25 @@
-"""
-This file is used for loading training, validation, and testing data into the models.
-It is specifically designed to handle 3D single-channel medical data.
-"""
-from __future__ import print_function
-
-import sys
-sys.path.append('./')
-sys.path.append('../')
-sys.path.append('../Models/')
-sys.path.append('../Model_Helpers/')
-sys.path.append('../Custom_Functions/')
-
-
-
-import threading
-from os.path import join, basename
-from os import mkdir
+import os
+from os.path import join
 from glob import glob
 import csv
 from sklearn.model_selection import KFold
 import numpy as np
-from numpy.random import rand, shuffle
+from numpy.random import shuffle
 import SimpleITK as sitk
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import tensorflow.keras.preprocessing.image as preprocess
-import os
-import matplotlib
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import threading
 
-plt.ioff()
-
+import sys
+sys.path.extend(['./','../','../Models/','../Custom_Functions/','../Model_Helpers/'])
 
 from Custom_Functions.custom_data_aug import elastic_transform, salt_pepper_noise
 
 debug = 0
 
-
-def load_data(data_root_dir, split_num):
-    training_list = []
-    testing_list = []
-
-    with open(join(data_root_dir, "split_lists", f"train_split_{split_num}.csv"), "r") as f:
-        reader = csv.reader(f)
-        training_list = [row for row in reader if row]  # Filter out empty rows
-
-    with open(join(data_root_dir, "split_lists", f"test_split_{split_num}.csv"), "r") as f:
-        reader = csv.reader(f)
-        testing_list = [row for row in reader if row]  # Filter out empty rows
-
-    # Split training_list into new_training_list and validation_list
-    split_index = int(0.8 * len(training_list))
-    new_training_list = training_list[:split_index]
-    validation_list = training_list[split_index:]
-
-    if not new_training_list:
-        new_training_list = validation_list
-
-    return new_training_list, validation_list, testing_list
-
-
-def compute_class_weights(root, train_data_list):
-    """
-    We want to weight the positive pixels by the ratio of negative to positive.
-    Three scenarios:
-        1. Equal classes. neg/pos ~ 1. Standard binary cross-entropy
-        2. Many more negative examples. The network will learn to always output negative. In this way we want to
-           increase the punishment for getting a positive wrong that way it will want to put positive more
-        3. Many more positive examples. We weight the positive value less so that negatives have a chance.
-    """
-    pos = 0.0
-    neg = 0.0
-    for img_name in tqdm(train_data_list):
-        img = np.load(join(root, "masks", "masks_" + img_name[0])).T
-        for slic in img:
-            if not np.any(slic):
-                continue
-            else:
-                p = np.count_nonzero(slic)
-                pos += p
-                neg += slic.size - p
-
-    return neg / pos
-
-
-def load_class_weights(root, split):
-    class_weight_filename = join(
-        root, "split_lists", "train_split_" + str(split) + "_class_weights.npy"
-    )
-    try:
-        return np.load(class_weight_filename)
-    except:
-        print(
-            "Class weight file {} not found.\nComputing class weights now. This may take "
-            "some time.".format(class_weight_filename)
-        )
-        train_data_list, _, _ = load_data(root, str(split))
-        value = compute_class_weights(root, train_data_list)
-        np.save(class_weight_filename, value)
-        print(
-            "Finished computing class weights. This value has been saved for this training split."
-        )
-        return value
-
-
-def split_data(root_path, num_splits):
-    mask_list = []
-    for ext in ("*.mhd", "*.hdr", "*.nii", "*.npy"):
-        mask_list.extend(sorted(glob(join(root_path, "masks", ext))))
-
-    assert len(mask_list) != 0, "Unable to find any files in {}".format(
-        join(root_path, "masks")
-    )
-
-    outdir = join(root_path, "split_lists")
-    try:
-        mkdir(outdir)
-    except:
-        pass
-    if num_splits == 1:
-        # Testing model, training set = testing set = 1 image
-        train_index = test_index = mask_list
-        with open(
-            join(outdir, "train_split_" + str(0) + ".csv"),
-            "w",
-            encoding="utf-8",
-            newline="",
-        ) as csvfile:
-            writer = csv.writer(
-                csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL
-            )
-            print("basename=%s" % ([basename(mask_list[0]).replace("masks_", "")]))
-            writer.writerow([basename(mask_list[0]).replace("masks_", "")])
-        with open(
-            join(outdir, "test_split_" + str(0) + ".csv"),
-            "w",
-            encoding="utf-8",
-            newline="",
-        ) as csvfile:
-            writer = csv.writer(
-                csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL
-            )
-            writer.writerow([basename(mask_list[0]).replace("masks_", "")])
-    else:
-        kf = KFold(n_splits=num_splits)
-        n = 0
-        for train_index, test_index in kf.split(mask_list):
-            with open(join(outdir, "train_split_" + str(n) + ".csv"), "w") as csvfile:
-                writer = csv.writer(
-                    csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL
-                )
-                for i in train_index:
-                    writer.writerow([basename(mask_list[i]).replace("masks_", "")])
-            with open(join(outdir, "test_split_" + str(n) + ".csv"), "w") as csvfile:
-                writer = csv.writer(
-                    csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL
-                )
-                for i in test_index:
-                    writer.writerow([basename(mask_list[i]).replace("masks_", "")])
-            n += 1
-
-
-def convert_data_to_numpy(root_path, img_name, no_masks=False, overwrite=False):
-    fname = img_name[:-4]
-    numpy_path = join(root_path, "np_files")
-    numpy_images_path = join(root_path, "np_files", "images")
-    numpy_masks_path = join(root_path, "np_files", "masks")
-    img_path = join(root_path, "imgs")
-    mask_path = join(root_path, "masks")
-    fig_path = join(root_path, "figs")
-
-    # Ensure the directories exist
-    os.makedirs(numpy_path, exist_ok=True)
-    os.makedirs(numpy_images_path, exist_ok=True)
-    os.makedirs(numpy_masks_path, exist_ok=True)
-    os.makedirs(fig_path, exist_ok=True)
-
-    if not overwrite:
-        try:
-            with np.load(join(numpy_path, fname + ".npz")) as data:
-                return data["img"], data["mask"]
-        except:
-            pass
-
-    try:
-        img = np.load(join(img_path, "images_" + img_name))
-        assert len(img.shape) == 3, f"Expected 3D array for image, got {len(img.shape)}D array"
-        
-        if not no_masks:
-            mask = np.load(join(mask_path, "masks_" + img_name))
-            assert len(mask.shape) == 3, f"Expected 3D array for mask, got {len(mask.shape)}D array"
-
-        if not no_masks:
-            np.savez_compressed(join(numpy_path, "images", "images_" + fname + ".npz"), img=img)
-            np.savez_compressed(join(numpy_path, "masks", "masks_" + fname + ".npz"), mask=mask)
-        else:
-            np.savez_compressed(join(numpy_path, "images", "images_" + fname + ".npz"), img=img)
-
-        if not no_masks:
-            return img, mask
-        else:
-            return img
-
-    except Exception as e:
-        print("\n" + "-" * 100)
-        print("Unable to load img or masks for {}".format(fname))
-        print(e)
-        print("Skipping file")
-        print("-" * 100 + "\n")
-
-        return np.zeros(1), np.zeros(1)
-
-
-def flip_axis(x, axis):
-    x = np.asarray(x).swapaxes(axis, 0)
-    x = x[::-1, ...]
-    x = x.swapaxes(0, axis)
-    return x
-
-
-def augmentImages(batch_of_images, batch_of_masks):
-    for i in range(len(batch_of_images)):
-        img_and_mask = np.concatenate(
-            (batch_of_images[i, ...], batch_of_masks[i, ...]), axis=2
-        )
-        if (
-            img_and_mask.ndim == 4
-        ):  # This assumes single channel data. For multi-channel you'll need
-            # change this to put all channel in slices channel
-            orig_shape = img_and_mask.shape
-            img_and_mask = img_and_mask.reshape((img_and_mask.shape[0:3]))
-
-        if np.random.randint(0, 10) == 7:
-            img_and_mask = preprocess.random_rotation(
-                img_and_mask,
-                rg=45,
-                row_axis=0,
-                col_axis=1,
-                channel_axis=2,
-                fill_mode="constant",
-                cval=0.0,
-            )
-
-        if np.random.randint(0, 5) == 3:
-            img_and_mask = elastic_transform(
-                img_and_mask, alpha=1000, sigma=80, alpha_affine=50
-            )
-
-        if np.random.randint(0, 10) == 7:
-            img_and_mask = preprocess.random_shift(
-                img_and_mask,
-                wrg=0.2,
-                hrg=0.2,
-                row_axis=0,
-                col_axis=1,
-                channel_axis=2,
-                fill_mode="constant",
-                cval=0.0,
-            )
-
-        if np.random.randint(0, 10) == 7:
-            img_and_mask = preprocess.random_shear(
-                img_and_mask,
-                intensity=16,
-                row_axis=0,
-                col_axis=1,
-                channel_axis=2,
-                fill_mode="constant",
-                cval=0.0,
-            )
-
-        if np.random.randint(0, 10) == 7:
-            img_and_mask = preprocess.random_zoom(
-                img_and_mask,
-                zoom_range=(0.75, 0.75),
-                row_axis=0,
-                col_axis=1,
-                channel_axis=2,
-                fill_mode="constant",
-                cval=0.0,
-            )
-
-        if np.random.randint(0, 10) == 7:
-            img_and_mask = flip_axis(img_and_mask, axis=1)
-
-        if np.random.randint(0, 10) == 7:
-            img_and_mask = flip_axis(img_and_mask, axis=0)
-
-        if np.random.randint(0, 10) == 7:
-            salt_pepper_noise(img_and_mask, salt=0.2, amount=0.04)
-
-        if batch_of_images.ndim == 4:
-            batch_of_images[i, ...] = img_and_mask[..., 0 : img_and_mask.shape[2] // 2]
-            batch_of_masks[i, ...] = img_and_mask[..., img_and_mask.shape[2] // 2 :]
-        if batch_of_images.ndim == 5:
-            img_and_mask = img_and_mask.reshape(orig_shape)
-            batch_of_images[i, ...] = img_and_mask[
-                ..., 0 : img_and_mask.shape[2] // 2, :
-            ]
-            batch_of_masks[i, ...] = img_and_mask[..., img_and_mask.shape[2] // 2 :, :]
-
-        # Ensure the masks did not get any non-binary values.
-        batch_of_masks[batch_of_masks > 0.5] = 1
-        batch_of_masks[batch_of_masks <= 0.5] = 0
-
-    return (batch_of_images, batch_of_masks)
-
-
-""" Make the generators threadsafe in case of multiple threads """
-
-
 class threadsafe_iter:
-    """Takes an iterator/generator and makes it thread-safe by
-    serializing call to the `next` method of given iterator/generator.
-    """
-
     def __init__(self, it):
         self.it = it
         self.lock = threading.Lock()
@@ -328,15 +31,159 @@ class threadsafe_iter:
         with self.lock:
             return self.it.__next__()
 
-
 def threadsafe_generator(f):
-    """A decorator that takes a generator function and makes it thread-safe."""
-
     def g(*a, **kw):
         return threadsafe_iter(f(*a, **kw))
-
     return g
 
+def load_data(data_root_dir, split_num):
+    with open(join(data_root_dir, "split_lists", f"train_split_{split_num}.csv"), "r") as f:
+        reader = csv.reader(f)
+        training_list = [row for row in reader if row]
+
+    with open(join(data_root_dir, "split_lists", f"test_split_{split_num}.csv"), "r") as f:
+        reader = csv.reader(f)
+        testing_list = [row for row in reader if row]
+
+    split_index = int(0.8 * len(training_list))
+    new_training_list = training_list[:split_index]
+    validation_list = training_list[split_index:]
+
+    return new_training_list, validation_list, testing_list
+
+def compute_class_weights(root, train_data_list):
+    pos = neg = 0.0
+    for img_name in tqdm(train_data_list):
+        img = np.load(join(root, "masks", "masks_" + img_name[0])).T
+        for slic in img:
+            if np.any(slic):
+                p = np.count_nonzero(slic)
+                pos += p
+                neg += slic.size - p
+    return neg / pos
+
+def load_class_weights(root, split):
+    class_weight_filename = join(root, "split_lists", f"train_split_{split}_class_weights.npy")
+    try:
+        return np.load(class_weight_filename)
+    except FileNotFoundError:
+        print(f"Class weight file {class_weight_filename} not found.\nComputing class weights now. This may take some time.")
+        train_data_list, _, _ = load_data(root, str(split))
+        value = compute_class_weights(root, train_data_list)
+        np.save(class_weight_filename, value)
+        print("Finished computing class weights. This value has been saved for this training split.")
+        return value
+
+def split_data(root_path, num_splits):
+    mask_list = []
+    for ext in ("*.mhd", "*.hdr", "*.nii", "*.npy"):
+        mask_list.extend(sorted(glob(join(root_path, "masks", ext))))
+
+    assert mask_list, f"Unable to find any files in {join(root_path, 'masks')}"
+
+    outdir = join(root_path, "split_lists")
+    os.makedirs(outdir, exist_ok=True)
+
+    if num_splits == 1:
+        train_index = test_index = [0]
+        for name, index in (("train", train_index), ("test", test_index)):
+            with open(join(outdir, f"{name}_split_0.csv"), "w", newline="") as csvfile:
+                writer = csv.writer(csvfile)
+                for i in index:
+                    writer.writerow([os.path.basename(mask_list[i]).replace("masks_", "")])
+    else:
+        kf = KFold(n_splits=num_splits)
+        for n, (train_index, test_index) in enumerate(kf.split(mask_list)):
+            for name, index in (("train", train_index), ("test", test_index)):
+                with open(join(outdir, f"{name}_split_{n}.csv"), "w", newline="") as csvfile:
+                    writer = csv.writer(csvfile)
+                    for i in index:
+                        writer.writerow([os.path.basename(mask_list[i]).replace("masks_", "")])
+
+def convert_data_to_numpy(root_path, img_name, no_masks=False, overwrite=False):
+    fname = img_name[:-4]
+    numpy_path = join(root_path, "np_files")
+    os.makedirs(join(numpy_path, "images"), exist_ok=True)
+    if not no_masks:
+        os.makedirs(join(numpy_path, "masks"), exist_ok=True)
+
+    if not overwrite and os.path.isfile(join(numpy_path, f"{fname}.npz")):
+        with np.load(join(numpy_path, f"{fname}.npz")) as data:
+            return data["img"], data["mask"]
+
+    try:
+        img = np.load(join(root_path, "imgs", "images_" + img_name))
+        assert len(img.shape) == 3, f"Expected 3D image, got {img.ndim}D"
+
+        if not no_masks:
+            mask = np.load(join(root_path, "masks", "masks_" + img_name))
+            assert len(mask.shape) == 3, f"Expected 3D mask, got {mask.ndim}D"
+
+        if no_masks:
+            np.savez_compressed(join(numpy_path, "images", f"images_{fname}.npz"), img=img)
+            return img
+        else:
+            np.savez_compressed(join(numpy_path, "images", f"images_{fname}.npz"), img=img)
+            np.savez_compressed(join(numpy_path, "masks", f"masks_{fname}.npz"), mask=mask)
+            return img, mask
+    except Exception as e:
+        print(f"\n{'-'*100}\nUnable to load img or masks for {fname}\n{e}\nSkipping file\n{'-'*100}\n")
+        return np.zeros(1), np.zeros(1)
+
+def flip_axis(x, axis):
+    x = np.asarray(x).swapaxes(axis, 0)
+    x = x[::-1, ...]
+    x = x.swapaxes(0, axis)
+    return x
+
+def augment_data(imgs, masks, img_aug=True, mask_aug=True):
+    for i in range(len(imgs)):
+        if img_aug:
+            if np.random.rand() < 0.1:
+                imgs[i] = preprocess.random_rotation(
+                    imgs[i], 45, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0)
+            if np.random.rand() < 0.2:
+                imgs[i] = elastic_transform(imgs[i], alpha=1000, sigma=80, alpha_affine=50)
+            if np.random.rand() < 0.1:
+                imgs[i] = preprocess.random_shift(
+                    imgs[i], 0.2, 0.2, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0)
+            if np.random.rand() < 0.1:
+                imgs[i] = preprocess.random_shear(
+                    imgs[i], 16, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0)
+            if np.random.rand() < 0.1:
+                imgs[i] = preprocess.random_zoom(
+                    imgs[i], (0.75,0.75), row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0)
+            if np.random.rand() < 0.1:
+                imgs[i] = flip_axis(imgs[i], axis=1)
+            if np.random.rand() < 0.1:
+                imgs[i] = flip_axis(imgs[i], axis=0)
+            if np.random.rand() < 0.1:
+                imgs[i] = salt_pepper_noise(imgs[i])
+
+        if mask_aug:
+            if np.random.rand() < 0.1:
+                masks[i] = preprocess.random_rotation(
+                    masks[i], 45, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0)
+            if np.random.rand() < 0.2:
+                masks[i] = elastic_transform(masks[i], alpha=1000, sigma=80, alpha_affine=50)
+            if np.random.rand() < 0.1:
+                masks[i] = preprocess.random_shift(
+                    masks[i], 0.2, 0.2, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0)
+            if np.random.rand() < 0.1:
+                masks[i] = preprocess.random_shear(
+                    masks[i], 16, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0)
+            if np.random.rand() < 0.1:
+                masks[i] = preprocess.random_zoom(
+                    masks[i], (0.75,0.75), row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0)
+            if np.random.rand() < 0.1:
+                masks[i] = flip_axis(masks[i], axis=1)
+            if np.random.rand() < 0.1:
+                masks[i] = flip_axis(masks[i], axis=0)
+
+        masks[masks > 0.5] = 1
+        masks[masks <= 0.5] = 0
+
+    return imgs, masks
 
 @threadsafe_generator
 def generate_train_batches(
@@ -348,135 +195,79 @@ def generate_train_batches(
     numSlices=1,
     subSampAmt=-1,
     stride=1,
-    downSampAmt=1,
-    shuff=1,
-    aug_data=1,
+    shuff=True,
+    aug_data=True,
 ):
-    # Create placeholders for training
-    img_batch = np.zeros(
-        (np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32
-    )
-    mask_batch = np.zeros(
-        (np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32
-    )
-
     while True:
         if shuff:
             shuffle(train_list)
+
+        targ_shape = np.concatenate(((batchSize,), net_input_shape))
+        img_batch = np.zeros(targ_shape, dtype=np.float32)
+        mask_batch = np.zeros_like(img_batch)
+
         count = 0
-        for i, scan_name in enumerate(train_list):
+        
+        for scan_name in train_list:
             try:
-                scan_name = scan_name[0]
+                img_path = os.path.normpath(os.path.join(root_path, "imgs", "images_" + scan_name[0]))
+                mask_path = os.path.normpath(os.path.join(root_path, "masks", "masks_" + scan_name[0]))
                 
-                path_to_np_img = join(
-                    root_path, "np_files", "images", "images_" + scan_name
-                )
-                path_to_np_mask = join(
-                    root_path, "np_files", "masks", "masks_" + scan_name
-                )
-                train_img = np.load(path_to_np_img).T
-                print(f"Shape of train_img: {train_img.shape}")
-                assert len(train_img.shape) == 3, f"Expected 3D array, got {len(train_img.shape)}D array"
-                train_img = train_img[:, :, np.newaxis]
-                train_mask = np.load(path_to_np_mask).T
-                train_mask = train_mask[:, :, np.newaxis]
-            except Exception as e:
-                print(
-                    "\nPre-made numpy array not found for {}.\nCreating now...".format(
-                        scan_name[:-4]
-                    )
-                )
-                print(e)
-                train_img, train_mask = convert_data_to_numpy(root_path, scan_name)
-                if np.array_equal(train_img, np.zeros(1)):
-                    continue
+                img_npz_path = os.path.normpath(os.path.join(root_path, "np_files", "images", f"images_{scan_name[0][:-4]}.npz"))
+                mask_npz_path = os.path.normpath(os.path.join(root_path, "np_files", "masks", f"masks_{scan_name[0][:-4]}.npz"))
+                
+                if os.path.exists(img_npz_path) and os.path.exists(mask_npz_path):
+                    img_data = np.load(img_path)
+                    img = img_data.T
+                    mask_data = np.load(mask_path)
+                    mask = mask_data.T
+                    print(f"\nTrain: Pre-made numpy array exists as {scan_name[0][:-4]}.")
+                    print(f"Shape of train_img: {img.shape}")
+                    assert len(img.shape) == 3, f"Expected 3D array, got {len(img.shape)}D array"
                 else:
-                    print("\nFinished making npz file.")
+                    raise FileNotFoundError(f"NPZ files not found for {scan_name[0][:-4]}")
+            except Exception as e:
+                print("\n", e)
+                print(f"Train: Pre-made numpy array not found for {scan_name[0][:-4]}.\nCreating now...")
+                img, mask = convert_data_to_numpy(root_path, scan_name[0])
+                if np.array_equal(img, np.zeros(1)):
+                    continue
+                print("Finished making npz file.")
 
             if numSlices == 1:
                 subSampAmt = 0
             elif subSampAmt == -1 and numSlices > 1:
                 np.random.seed(None)
-                subSampAmt = int(rand(1) * (train_img.shape[2] * 0.05))
+                subSampAmt = int(np.random.rand() * (img.shape[2] * 0.05))
 
-            indicies = np.arange(
-                0, train_img.shape[2] - numSlices * (subSampAmt + 1) + 1, stride
-            )
+            indicies = np.arange(0, img.shape[2] - numSlices * (subSampAmt + 1) + 1, stride)
             if shuff:
                 shuffle(indicies)
 
             for j in indicies:
-                if not np.any(
-                    train_mask[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                ):
+                if not np.any(mask[:, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1]):
                     continue
-                if img_batch.ndim == 4:
-                    img_batch[count, :, :, :] = train_img[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                    mask_batch[count, :, :, :] = train_mask[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                elif img_batch.ndim == 5:
-                    # Assumes img and mask are single channel. Replace 0 with : if multi-channel.
-                    img_batch[count, :, :, :, 0] = train_img[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                    mask_batch[count, :, :, :, 0] = train_mask[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                else:
-                    print("Error this function currently only supports 2D and 3D data.")
-                    exit(0)
-
+                img_batch[count] = img[:, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1]
+                mask_batch[count] = mask[:, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1]
                 count += 1
-                if count % batchSize == 0:
-                    count = 0
+                if count == batchSize:
                     if aug_data:
-                        img_batch, mask_batch = augmentImages(img_batch, mask_batch)
+                        img_batch, mask_batch = augment_data(img_batch, mask_batch)
                     if debug:
-                        if img_batch.ndim == 4:
-                            plt.imshow(np.squeeze(img_batch[0, :, :, 0]), cmap="gray")
-                            plt.imshow(np.squeeze(mask_batch[0, :, :, 0]), alpha=0.15)
-                        elif img_batch.ndim == 5:
-                            plt.imshow(
-                                np.squeeze(img_batch[0, :, :, 0, 0]), cmap="gray"
-                            )
-                            plt.imshow(
-                                np.squeeze(mask_batch[0, :, :, 0, 0]), alpha=0.15
-                            )
-                        plt.savefig(
-                            join(root_path, "logs", "ex_train.png"),
-                            format="png",
-                            bbox_inches="tight",
-                        )
+                        plt.imshow(np.squeeze(img_batch[0]), cmap='gray')
+                        plt.imshow(np.squeeze(mask_batch[0]), alpha=0.15)
+                        plt.savefig(join(root_path, "logs", "ex_train.png"), format="png", bbox_inches="tight")
                         plt.close()
-                    if net.find("caps") != -1:
-                        yield (
-                            [img_batch, mask_batch],
-                            [mask_batch, mask_batch * img_batch],
-                        )
-                    else:
-                        yield (img_batch, mask_batch)
+                    yield ([img_batch, mask_batch], [mask_batch, mask_batch * img_batch]) if 'caps' in net else (img_batch, mask_batch)
 
-        if count != 0:
+                    count = 0
+                    img_batch = np.zeros(targ_shape, dtype=np.float32)
+                    mask_batch = np.zeros_like(img_batch)
+
+        if count > 0:
             if aug_data:
-                img_batch[:count, ...], mask_batch[:count, ...] = augmentImages(
-                    img_batch[:count, ...], mask_batch[:count, ...]
-                )
-            if net.find("caps") != -1:
-                yield (
-                    [img_batch[:count, ...], mask_batch[:count, ...]],
-                    [
-                        mask_batch[:count, ...],
-                        mask_batch[:count, ...] * img_batch[:count, ...],
-                    ],
-                )
-            else:
-                yield (img_batch[:count, ...], mask_batch[:count, ...])
-
+                img_batch[:count], mask_batch[:count] = augment_data(img_batch[:count], mask_batch[:count])
+            yield ([img_batch[:count], mask_batch[:count]], [mask_batch[:count], mask_batch[:count] * img_batch[:count]]) if 'caps' in net else (img_batch[:count], mask_batch[:count])
 
 @threadsafe_generator
 def generate_val_batches(
@@ -488,169 +279,116 @@ def generate_val_batches(
     numSlices=1,
     subSampAmt=-1,
     stride=1,
-    downSampAmt=1,
-    shuff=1,
+    shuff=True
 ):
-    # Create placeholders for validation
-    img_batch = np.zeros(
-        (np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32
-    )
-    mask_batch = np.zeros(
-        (np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32
-    )
-
     while True:
         if shuff:
             shuffle(val_list)
+
+        targ_shape = np.concatenate(((batchSize,), net_input_shape))
+        img_batch = np.zeros(targ_shape, dtype=np.float32)
+        mask_batch = np.zeros_like(img_batch)
+
         count = 0
-        for i, scan_name in enumerate(val_list):
+        for scan_name in val_list:
             try:
-                scan_name = scan_name[0]
-                path_to_np_img = join(
-                    root_path, "np_files", "imgs", "images_" + scan_name
-                )
-                path_to_np_mask = join(
-                    root_path, "np_files", "masks", "masks_" + scan_name
-                )
-                val_img = np.load(path_to_np_img).T
-                val_img = val_img[:, :, np.newaxis]
-                val_mask = np.load(path_to_np_mask).T
-                val_mask = val_mask[:, :, np.newaxis]
-            except:
-                print(
-                    "\nPre-made numpy array not found for {}.\nCreating now...".format(
-                        scan_name[:-4]
-                    )
-                )
-                val_img, val_mask = convert_data_to_numpy(root_path, scan_name)
-                if np.array_equal(val_img, np.zeros(1)):
-                    continue
+                img_path = os.path.normpath(os.path.join(root_path, "imgs", "images_" + scan_name[0]))
+                mask_path = os.path.normpath(os.path.join(root_path, "masks", "masks_" + scan_name[0]))
+                
+                img_npz_path = os.path.normpath(os.path.join(root_path, "np_files", "images", f"images_{scan_name[0][:-4]}.npz"))
+                mask_npz_path = os.path.normpath(os.path.join(root_path, "np_files", "masks", f"masks_{scan_name[0][:-4]}.npz"))
+                
+                if os.path.exists(img_npz_path) and os.path.exists(mask_npz_path):
+                    img_data = np.load(img_path)
+                    img = img_data.T
+                    mask_data = np.load(mask_path)
+                    mask = mask_data.T
+                    print(f"\nValidate: Pre-made numpy array exists as {scan_name[0][:-4]}.")
+                    print(f"Shape of train_img: {img.shape}")
+                    assert len(img.shape) == 3, f"Expected 3D array, got {len(img.shape)}D array"
                 else:
-                    print("\nFinished making npz file.")
+                    raise FileNotFoundError(f"NPZ files not found for {scan_name[0][:-4]}")
+            except Exception as e:
+                print("\n", e)
+                print(f"Validate: Pre-made numpy array not found for {scan_name[0][:-4]}.\nCreating now...")
+                img, mask = convert_data_to_numpy(root_path, scan_name[0])
+                if np.array_equal(img, np.zeros(1)):
+                    continue
+                print("Finished making npz file.")
 
             if numSlices == 1:
                 subSampAmt = 0
             elif subSampAmt == -1 and numSlices > 1:
                 np.random.seed(None)
-                subSampAmt = int(rand(1) * (val_img.shape[2] * 0.05))
+                subSampAmt = int(np.random.rand() * (img.shape[2] * 0.05))
 
-            indicies = np.arange(
-                0, val_img.shape[2] - numSlices * (subSampAmt + 1) + 1, stride
-            )
+            indicies = np.arange(0, img.shape[2] - numSlices * (subSampAmt + 1) + 1, stride)
             if shuff:
                 shuffle(indicies)
 
             for j in indicies:
-                if not np.any(
-                    val_mask[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                ):
+                if not np.any(mask[:, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1]):
                     continue
-                if img_batch.ndim == 4:
-                    img_batch[count, :, :, :] = val_img[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                    mask_batch[count, :, :, :] = val_mask[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                elif img_batch.ndim == 5:
-                    # Assumes img and mask are single channel. Replace 0 with : if multi-channel.
-                    img_batch[count, :, :, :, 0] = val_img[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                    mask_batch[count, :, :, :, 0] = val_mask[
-                        :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                    ]
-                else:
-                    print("Error this function currently only supports 2D and 3D data.")
-                    exit(0)
-
+                img_batch[count] = img[:, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1]
+                mask_batch[count] = mask[:, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1]
                 count += 1
-                if count % batchSize == 0:
+                if count == batchSize:
+                    yield ([img_batch, mask_batch], [mask_batch, mask_batch * img_batch]) if 'caps' in net else (img_batch, mask_batch)
                     count = 0
-                    if net.find("caps") != -1:
-                        yield (
-                            [img_batch, mask_batch],
-                            [mask_batch, mask_batch * img_batch],
-                        )
-                    else:
-                        yield (img_batch, mask_batch)
-
-        if count != 0:
-            if net.find("caps") != -1:
-                yield (
-                    [img_batch[:count, ...], mask_batch[:count, ...]],
-                    [
-                        mask_batch[:count, ...],
-                        mask_batch[:count, ...] * img_batch[:count, ...],
-                    ],
-                )
-            else:
-                yield (img_batch[:count, ...], mask_batch[:count, ...])
-
+                    img_batch = np.zeros(targ_shape, dtype=np.float32)
+                    mask_batch = np.zeros_like(img_batch)
+                    
+        if count > 0:
+            yield ([img_batch[:count], mask_batch[:count]], [mask_batch[:count], mask_batch[:count] * img_batch[:count]]) if 'caps' in net else (img_batch[:count], mask_batch[:count])
 
 @threadsafe_generator
 def generate_test_batches(
-    root_path,
+    root_path, 
     test_list,
     net_input_shape,
     batchSize,
-    numSlices=1,
+    numSlices=1,  
     subSampAmt=0,
-    stride=1,
-    downSampAmt=1,
+    stride=1
 ):
-    # Create placeholders for testing
-    img_batch = np.zeros(
-        (np.concatenate(((batchSize,), net_input_shape))), dtype=np.float32
-    )
-    count = 0
-    for i, scan_name in enumerate(test_list):
+    targ_shape = np.concatenate(((batchSize,), net_input_shape))
+    img_batch = np.zeros(targ_shape, dtype=np.float32)
+    
+    for scan_name in test_list:
         try:
-            scan_name = scan_name[0]
-            path_to_np_img = join(root_path, "np_files", "imgs", "images_" + scan_name)
-            test_img = np.load(path_to_np_img).T
-            test_img = test_img[:, :, np.newaxis]
-        except:
-            print(
-                "\nPre-made numpy array not found for {}.\nCreating now...".format(
-                    scan_name[:-4]
-                )
-            )
-            test_img = convert_data_to_numpy(root_path, scan_name, no_masks=True)
-            if np.array_equal(test_img, np.zeros(1)):
-                continue
+            img_path = os.path.normpath(os.path.join(root_path, "imgs", "images_" + scan_name[0]))
+            img_npz_path = os.path.normpath(os.path.join(root_path, "np_files", "images", f"images_{scan_name[0][:-4]}.npz"))
+            
+            if os.path.exists(img_npz_path):
+                img_data = np.load(img_path)
+                img = img_data.T
+                print(f"\nValidate: Pre-made numpy array exists as {scan_name[0][:-4]}.")
+                print(f"Shape of train_img: {img.shape}")
+                assert len(img.shape) == 3, f"Expected 3D array, got {len(img.shape)}D array"
             else:
-                print("\nFinished making npz file.")
-
+                raise FileNotFoundError(f"NPZ files not found for {scan_name[0][:-4]}")
+        except Exception as e:
+            print("\n", e)
+            print(f"Test: Pre-made numpy array not found for {scan_name[0][:-4]}.\nCreating now...")
+            img = convert_data_to_numpy(root_path, scan_name[0], no_masks=True)
+            if np.array_equal(img, np.zeros(1)):
+                continue
+            print("Finished making npz file.")
+        
         if numSlices == 1:
             subSampAmt = 0
         elif subSampAmt == -1 and numSlices > 1:
             np.random.seed(None)
-            subSampAmt = int(rand(1) * (test_img.shape[2] * 0.05))
-
-        indicies = np.arange(
-            0, test_img.shape[2] - numSlices * (subSampAmt + 1) + 1, stride
-        )
+            subSampAmt = int(np.random.rand() * (img.shape[2] * 0.05))
+            
+        indicies = np.arange(0, img.shape[2] - numSlices * (subSampAmt + 1) + 1, stride)
+        count = 0
         for j in indicies:
-            if img_batch.ndim == 4:
-                img_batch[count, :, :, :] = test_img[
-                    :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                ]
-            elif img_batch.ndim == 5:
-                # Assumes img and mask are single channel. Replace 0 with : if multi-channel.
-                img_batch[count, :, :, :, 0] = test_img[
-                    :, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1
-                ]
-            else:
-                print("Error this function currently only supports 2D and 3D data.")
-                exit(0)
-
+            img_batch[count] = img[:, :, j : j + numSlices * (subSampAmt + 1) : subSampAmt + 1]
             count += 1
-            if count % batchSize == 0:
+            if count == batchSize:
+                yield img_batch
                 count = 0
-                yield (img_batch)
-
-    if count != 0:
-        yield (img_batch[:count, :, :, :])
+                img_batch = np.zeros(targ_shape, dtype=np.float32)
+        if count > 0:
+            yield img_batch[:count]
