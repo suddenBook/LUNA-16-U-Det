@@ -9,7 +9,15 @@ sys.path.extend(['./','../','../Models/','../Data_Loader/','../Custom_Functions/
 
 def dc(result, reference):
     """
-    Dice coefficient.
+    Dice Coefficient (DC), a statistical measure for evaluating the similarity between two sets.
+    It is often used to compare the pixel-wise agreement between a predicted segmentation and its corresponding ground truth.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+
+    Returns:
+    float: Dice coefficient score.
     """
     result = np.atleast_1d(result.astype(np.bool_))
     reference = np.atleast_1d(reference.astype(np.bool_))
@@ -26,7 +34,15 @@ def dc(result, reference):
 
 def jc(result, reference):
     """
-    Jaccard coefficient.
+    Jaccard Coefficient (JC), also known as the Intersection over Union (IoU).
+    This metric measures the similarity and diversity of sample sets, commonly used in the evaluation of segmentation tasks.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+
+    Returns:
+    float: Jaccard coefficient score.
     """
     result = np.atleast_1d(result.astype(np.bool_))
     reference = np.atleast_1d(reference.astype(np.bool_))
@@ -42,7 +58,15 @@ def jc(result, reference):
 
 def precision(result, reference):
     """
-    Precision.
+    Precision metric, which evaluates the accuracy of the positive predictions.
+    It is the ratio of true positive predictions to the total predicted positives.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+
+    Returns:
+    float: Precision score.
     """
     result = np.atleast_1d(result.astype(np.bool_))
     reference = np.atleast_1d(reference.astype(np.bool_))
@@ -58,8 +82,16 @@ def precision(result, reference):
     
 def recall(result, reference):
     """
-    Recall.
-    """  
+    Recall metric, also known as sensitivity or true positive rate.
+    It measures the ability of a model to find all the relevant cases (true positives) within a dataset.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+
+    Returns:
+    float: Recall score.
+    """ 
     result = np.atleast_1d(result.astype(np.bool_))
     reference = np.atleast_1d(reference.astype(np.bool_))
         
@@ -74,15 +106,19 @@ def recall(result, reference):
     
 def sensitivity(result, reference):
     """
-    Sensitivity.
-    Same as :func:`recall`, see there for a detailed description.
+    Sensitivity, identical to recall, measures the proportion of actual positives that are correctly identified.
+    It is particularly useful in medical imaging to evaluate how well a model detects conditions.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+
+    Returns:
+    float: Sensitivity score.
     """
     return recall(result, reference)
 
 def specificity(result, reference):
-    """
-    Specificity.
-    """
     result = np.atleast_1d(result.astype(np.bool_))
     reference = np.atleast_1d(reference.astype(np.bool_))
        
@@ -97,7 +133,17 @@ def specificity(result, reference):
 
 def asd(result, reference, voxelspacing=None, connectivity=1):
     """
-    Average surface distance.
+    Average Surface Distance (ASD), a metric used to quantify the average distance between the surfaces of two binary objects.
+    It is useful in assessing the spatial accuracy of segmentation models.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+    voxelspacing (tuple, optional): Voxel spacing in each dimension.
+    connectivity (int, optional): Connectivity defining neighborhood for surface extraction.
+
+    Returns:
+    float: Average surface distance.
     """
     sds = __surface_distances(result, reference, voxelspacing, connectivity)
     asd = sds.mean()
@@ -105,7 +151,17 @@ def asd(result, reference, voxelspacing=None, connectivity=1):
 
 def assd(result, reference, voxelspacing=None, connectivity=1):
     """
-    Average symmetric surface distance.
+    Average Symmetric Surface Distance (ASSD), an extension of ASD that calculates the mean distance from each surface point of one segmentation to the nearest point on the surface of another segmentation and vice versa.
+    It provides a symmetric measure of the surface distance between two segmentations.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+    voxelspacing (tuple, optional): Voxel spacing in each dimension.
+    connectivity (int, optional): Connectivity defining neighborhood for surface extraction.
+
+    Returns:
+    float: Average symmetric surface distance.
     """
     assd = (asd(result, reference, voxelspacing, connectivity)
             + asd(reference, result, voxelspacing, connectivity)) / 2
@@ -113,7 +169,17 @@ def assd(result, reference, voxelspacing=None, connectivity=1):
 
 def hd(result, reference, voxelspacing=None, connectivity=1):
     """
-    Hausdorff Distance.
+    Hausdorff Distance (HD), a measure of the distance between the surfaces of two objects.
+    It is often used in medical imaging to evaluate the spatial distance between two segmentations.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+    voxelspacing (tuple, optional): Voxel spacing in each dimension.
+    connectivity (int, optional): Connectivity defining neighborhood for surface extraction.
+
+    Returns:
+    float: Hausdorff distance.
     """
     hd1 = __surface_distances(result, reference, voxelspacing, connectivity).max()
     hd2 = __surface_distances(reference, result, voxelspacing, connectivity).max()
@@ -122,7 +188,15 @@ def hd(result, reference, voxelspacing=None, connectivity=1):
 
 def ravd(result, reference):
     """
-    Relative absolute volume difference.
+    Relative Absolute Volume Difference (RAVD), a measure of the relative difference in volume between two segmentations.
+    It is calculated as the absolute difference in volume between the two segmentations divided by the volume of the reference segmentation.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+
+    Returns:
+    float: Relative absolute volume difference.
     """
     result = np.atleast_1d(result.astype(np.bool_))
     reference = np.atleast_1d(reference.astype(np.bool_))
@@ -136,7 +210,17 @@ def ravd(result, reference):
     
 def obj_asd(result, reference, voxelspacing=None, connectivity=1):
     """
-    Average surface distance between objects.
+    Average Surface Distance (ASD) between objects, a metric used to quantify the average distance between the surfaces of two binary objects.
+    It is useful in assessing the spatial accuracy of segmentation models.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+    voxelspacing (tuple, optional): Voxel spacing in each dimension.
+    connectivity (int, optional): Connectivity defining neighborhood for surface extraction.
+
+    Returns:
+    float: Average surface distance.
     """
     sds = list()
     labelmap1, labelmap2, _a, _b, mapping = __distinct_binary_object_correspondences(result, reference, connectivity)
@@ -149,7 +233,17 @@ def obj_asd(result, reference, voxelspacing=None, connectivity=1):
 
 def obj_assd(result, reference, voxelspacing=None, connectivity=1):
     """
-    Average symmetric surface distance between objects.
+    Average Symmetric Surface Distance (ASSD) between objects, an extension of ASD that calculates the mean distance from each surface point of one segmentation to the nearest point on the surface of another segmentation and vice versa.
+    It provides a symmetric measure of the surface distance between two segmentations.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+    voxelspacing (tuple, optional): Voxel spacing in each dimension.
+    connectivity (int, optional): Connectivity defining neighborhood for surface extraction.
+
+    Returns:
+    float: Average symmetric surface distance.
     """
     assd = (obj_asd(result, reference, voxelspacing, connectivity)
             + obj_asd(reference, result, voxelspacing, connectivity)) / 2
@@ -157,14 +251,32 @@ def obj_assd(result, reference, voxelspacing=None, connectivity=1):
         
 def obj_fpr(result, reference, connectivity=1):
     """
-    False positive rate of distinct binary object detection.
+    False Positive Rate (FPR) of distinct binary object detection.
+    It measures the proportion of false positive predictions compared to the total predicted positives.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+    connectivity (int, optional): Connectivity defining neighborhood for surface extraction.
+
+    Returns:
+    float: False positive rate.
     """
     _, _, _, n_obj_reference, mapping = __distinct_binary_object_correspondences(reference, result, connectivity)
     return (n_obj_reference - len(mapping)) / float(n_obj_reference)
     
 def obj_tpr(result, reference, connectivity=1):
     """
-    True positive rate of distinct binary object detection.
+    True Positive Rate (TPR) of distinct binary object detection.
+    It measures the proportion of true positive predictions compared to the total predicted positives.
+
+    Args:
+    result (numpy.ndarray): Predicted binary segmentation.
+    reference (numpy.ndarray): Ground truth binary segmentation.
+    connectivity (int, optional): Connectivity defining neighborhood for surface extraction.
+
+    Returns:
+    float: True positive rate.
     """
     _, _, n_obj_result, _, mapping = __distinct_binary_object_correspondences(reference, result, connectivity)
     return len(mapping) / float(n_obj_result)

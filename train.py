@@ -20,6 +20,27 @@ from load_3D_data import load_class_weights, generate_train_batches, generate_va
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 def get_loss(root, split, net, choice):
+    """
+    Selects and configures the loss function based on the specified choice.
+
+    Args:
+    root (str): The root directory where data is stored.
+    split (int): The data split number used to load specific data.
+    net (str): The name of the neural network model being used.
+    choice (str): The type of loss function to use. Options include:
+        - "w_bce": Weighted Binary Cross-Entropy. Uses class weights to handle class imbalance.
+        - "bce": Standard Binary Cross-Entropy, a common loss function for binary classification tasks.
+        - "dice": Dice Loss, which is particularly useful for segmentation tasks to maximize overlap between predicted and ground truth.
+        - "w_mar": Weighted Margin Loss, which applies a margin-based loss with weights to handle class imbalance.
+        - "mar": Standard Margin Loss, a margin-based loss function without class weighting.
+
+    Returns:
+    tuple: A tuple containing the configured loss function and None (as a placeholder for potential future use of loss weighting).
+
+    Raises:
+    ValueError: If an unknown loss function choice is provided.
+    """
+    
     if choice == "w_bce":
         pos_class_weight = load_class_weights(root=root, split=split)
         loss = weighted_binary_crossentropy_loss(pos_class_weight)

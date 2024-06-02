@@ -6,6 +6,23 @@ import sys
 sys.path.extend(['./','../','../Models/','../Data_Loader/','../Model_Helpers/'])
 
 def elastic_transform(image, alpha=2000, sigma=40, alpha_affine=40, random_state=None):
+    """
+    Applies an elastic deformation to an image which is useful for data augmentation, particularly in medical imaging.
+
+    Args:
+    image (numpy.ndarray): The input image to be transformed.
+    alpha (int, optional): Scaling factor that controls the intensity of the deformation in the elastic transform.
+    sigma (int, optional): Standard deviation of the Gaussian filter used in the elastic deformation.
+    alpha_affine (int, optional): Scaling factor that controls the intensity of the affine transformation.
+    random_state (np.random.RandomState, optional): Random state for reproducibility of the transformations.
+
+    Returns:
+    numpy.ndarray: The deformed image.
+
+    This function first applies an affine transformation to the image to simulate typical variations like rotations and shifts.
+    Then, it applies a more complex elastic deformation using Gaussian filters and displacement fields.
+    The result is an image that retains the same labels as the original but appears differently due to the transformations.
+    """
     if random_state is None:
         random_state = np.random.RandomState(None)
 
