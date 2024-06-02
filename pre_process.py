@@ -24,6 +24,25 @@ def make_mask(img, center, diam):
     return mask
 
 def process_nodule(ct_norm, annotations, origin, space, clahe, nodule_mask_dir, lungs_roi_dir, i, num_z):
+    """
+    Processes nodules from CT scans to generate masks and lung region of interest (ROI) images.
+
+    Args:
+    ct_norm (numpy.ndarray): Normalized CT scan data.
+    annotations (pandas.DataFrame): DataFrame containing nodule annotations with coordinates and diameter.
+    origin (numpy.ndarray): The origin coordinates of the CT scan.
+    space (numpy.ndarray): The spacing values between pixels in the CT scan.
+    clahe (cv2.CLAHE): CLAHE object for contrast limited adaptive histogram equalization.
+    nodule_mask_dir (str): Directory path to save the nodule masks.
+    lungs_roi_dir (str): Directory path to save the lung ROI images.
+    i (int): Index of the current processing scan.
+    num_z (int): Number of slices in the z-axis of the CT scan.
+
+    Processes each nodule based on its annotations by creating masks and enhancing the image using CLAHE.
+    It also applies various morphological transformations to extract the lung regions effectively.
+    The results are saved as numpy arrays in the specified directories.
+    """
+    
     for idx, row in annotations.iterrows():
         node_x, node_y, node_z, diam = int(row["coordX"]), int(row["coordY"]), int(row["coordZ"]), int(row["diameter_mm"])
         center = np.array([node_x, node_y, node_z])

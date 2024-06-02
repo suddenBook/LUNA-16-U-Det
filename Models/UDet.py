@@ -35,7 +35,6 @@ def UDet(input_shape=(512, 512, 1), use_mish=True):
     channels = [64, 128, 256, 512, 1024]
     P3_out, P4_out, P5_out, P6_out, P7_out = build_BiFPN([conv1, conv2, conv3, conv4, conv5], channels[0], 1)
 
-    # upsampled_conv5 = UpSampling2D(size=(8, 8))(conv5)
     up6 = concatenate([Conv2DTranspose(512, 2, strides=2, padding="same")(conv5), P6_out], axis=3)
     conv6 = Conv2D(512, 3, activation=activation, padding="same")(up6)
     conv6 = Conv2D(512, 3, activation=activation, padding="same")(conv6)

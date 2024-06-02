@@ -14,10 +14,7 @@ from train import train
 from test import test
 
 def parse_args():
-    parser = argparse.ArgumentParser(
-        description="Train and test a 3D medical image segmentation model.",
-        epilog="Example usage: python main.py --data_root_dir /path/to/data --train 1 --net udet --epochs 30"
-    )
+    parser = argparse.ArgumentParser(description="Train and test a 3D medical image segmentation model.", epilog="Example usage: python main.py --data_root_dir /path/to/data --train 1 --net udet --epochs 30")
     parser.add_argument("--data_root_dir", type=str, required=True, help="The root directory for your data.")
     parser.add_argument("--weights_path", type=str, default="", help='/path/to/trained_model.hdf5 from root. Set to "" for none.')
     parser.add_argument("--retrain", type=int, default=0)
