@@ -77,7 +77,7 @@ python main.py --data_root_dir /path/to/your/Data/ --train 1 --net bifpn --epoch
 python main.py --data_root_dir /path/to/your/Data/ --train 1 --net unet --activation relu --epochs 50 --which_gpus 0,1 --gpus 2
 
 # Testing with pre-trained weights
-python main.py --data_root_dir /path/to/your/Data/ --test 1 --weights_path ./path/to/weights.hdf5 --net bifpn
+python main.py --data_root_dir /path/to/your/Data/ --test 1 --weights_path ./path/to/weights.hdf5 --net unet --activation relu --split_num 1
 
 # Using data augmentation and custom loss during training
 python main.py --data_root_dir /path/to/your/Data/ --train 1 --net bifpn --epochs 30 --aug_data 1 --loss dice

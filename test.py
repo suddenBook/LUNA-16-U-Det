@@ -73,7 +73,7 @@ def predict(model, img, args):
     output = output_array[:, :, :, 0] if args.net.find("caps") == -1 else output_array[0][:, :, :, 0]
     return output
 
-def save_output(output, output_dir, img):
+def save_output(output, output_dir, img, args):
     output_img = sitk.GetImageFromArray(output)
     print(f"Shape of numpy array: {output.shape}")
     print("Segmenting output")
@@ -110,6 +110,7 @@ def save_qual_fig(output, gt_data, fig_out_dir, img, img_data):
     plt.close()
 
 def compute_metrics(output_bin, gt_data, img, sitk_img, args):
+    gt_data = gt_data.squeeze()
     row = [img[0][:-4]]
     if args.compute_dice:
         print("Computing Dice")
@@ -130,7 +131,7 @@ def compute_metrics(output_bin, gt_data, img, sitk_img, args):
 
 def test(args, test_list, model_list, net_input_shape):
     weights_path = os.path.join(args.check_dir, args.output_name + "_model_" + args.time + ".hdf5") if args.weights_path == "" else args.weights_path
-    output_dir = os.path.join(args.data_root_dir, "results", args.net, "split_" + str(args.split_num))
+    output_dir = os.path.join(args.data_root_dir, "results", args.net, args.activation, "split_" + str(args.split_num))
     raw_out_dir = os.path.join(output_dir, "raw_output")
     fin_out_dir = os.path.join(output_dir, "final_output")
     fig_out_dir = os.path.join(output_dir, "qual_figs")
@@ -175,7 +176,7 @@ def test(args, test_list, model_list, net_input_shape):
             img_data = img_data[np.newaxis, :, :]
             sitk_img = sitk.GetImageFromArray(img_data)
             
-            save_output(output, fin_out_dir, img)
+            save_output(output, fin_out_dir, img, args)
             gt_data = load_gt_mask(args, img)
             save_qual_fig(output, gt_data, fig_out_dir, img, img_data)
             

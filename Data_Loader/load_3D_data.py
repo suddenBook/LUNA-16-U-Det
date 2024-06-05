@@ -387,7 +387,7 @@ def generate_test_batches(
             if os.path.exists(img_npz_path):
                 img_data = np.load(img_path)
                 img = img_data.T
-                print(f"\nValidate: Pre-made numpy array exists as {scan_name[0][:-4]}.")
+                print(f"\Test: Pre-made numpy array exists as {scan_name[0][:-4]}.")
                 print(f"Shape of train_img: {img.shape}")
                 assert len(img.shape) == 3, f"Expected 3D array, got {len(img.shape)}D array"
             else:

@@ -10,6 +10,10 @@ __pycache__/
 # Trained Models
 *.hdf5
 
+# Results
+*.mhd
+*.raw
+
 # C extensions
 *.so
 
