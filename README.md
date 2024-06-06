@@ -1,4 +1,4 @@
-## Project Overview
+## Overview
 
 This project is designed to perform lung nodule detection and classification using the [LUNA16](https://luna16.grand-challenge.org/Home/) dataset, which is a large collection of annotated CT scans for lung nodule detection. The primary goal is to preprocess the data, train a model to detect lung nodules, and evaluate the model's performance.
 

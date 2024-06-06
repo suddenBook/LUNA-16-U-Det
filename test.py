@@ -82,9 +82,9 @@ def save_output(output, output_dir, img, args):
     
     print("Saving output")  
     writer = sitk.ImageFileWriter()
-    writer.SetFileName(os.path.join(output_dir, img[0][:-4] + "_raw_output" + img[0][-4:].replace(".npy", ".mhd")))
+    writer.SetFileName(os.path.join(output_dir, "raw_output", img[0][:-4] + "_raw_output" + img[0][-4:].replace(".npy", ".mhd")))
     writer.Execute(output_img)
-    writer.SetFileName(os.path.join(output_dir, img[0][:-4] + "_final_output" + img[0][-4:].replace(".npy", ".mhd")))  
+    writer.SetFileName(os.path.join(output_dir, "final_output", img[0][:-4] + "_final_output" + img[0][-4:].replace(".npy", ".mhd")))  
     writer.Execute(output_mask)
 
 def load_gt_mask(args, img):
@@ -92,7 +92,7 @@ def load_gt_mask(args, img):
     gt_data = gt_data[np.newaxis, :, :]
     return gt_data
 
-def save_qual_fig(output, gt_data, fig_out_dir, img, img_data):
+def save_qual_fig(output, gt_data, output_dir, img, img_data):
     print("Creating qualitative figure for quick reference")
     f, ax = plt.subplots(1, 3, figsize=(15, 5))
     
@@ -106,7 +106,7 @@ def save_qual_fig(output, gt_data, fig_out_dir, img, img_data):
         
     fig = plt.gcf()
     fig.suptitle(img[0][:-4])  
-    plt.savefig(os.path.join(fig_out_dir, img[0][:-4] + "_qual_fig" + ".png"), bbox_inches="tight")
+    plt.savefig(os.path.join(output_dir, "qual_figs", img[0][:-4] + "_qual_fig" + ".png"), bbox_inches="tight")
     plt.close()
 
 def compute_metrics(output_bin, gt_data, img, sitk_img, args):
@@ -132,10 +132,11 @@ def compute_metrics(output_bin, gt_data, img, sitk_img, args):
 def test(args, test_list, model_list, net_input_shape):
     weights_path = os.path.join(args.check_dir, args.output_name + "_model_" + args.time + ".hdf5") if args.weights_path == "" else args.weights_path
     output_dir = os.path.join(args.data_root_dir, "results", args.net, args.activation, "split_" + str(args.split_num))
+    
     raw_out_dir = os.path.join(output_dir, "raw_output")
     fin_out_dir = os.path.join(output_dir, "final_output")
     fig_out_dir = os.path.join(output_dir, "qual_figs")
-    
+
     for out_dir in [raw_out_dir, fin_out_dir, fig_out_dir]:
         os.makedirs(out_dir, exist_ok=True)
 
@@ -146,8 +147,8 @@ def test(args, test_list, model_list, net_input_shape):
         print("Unable to find weights. Testing with random weights.")
     eval_model.summary(positions=[0.38, 0.65, 0.75, 1.0])
 
-    # Set up placeholders
     outfile = ""
+
     if args.compute_dice:
         dice_arr = np.zeros((len(test_list)))
         outfile += "dice_"
@@ -159,6 +160,7 @@ def test(args, test_list, model_list, net_input_shape):
         outfile += "assd_"
 
     print("Testing... This will take some time...")
+
     with open(os.path.join(output_dir, args.save_prefix + outfile + "scores.csv"), "w") as csvfile:
         writer = csv.writer(csvfile, delimiter=",", quotechar="|", quoting=csv.QUOTE_MINIMAL)
         header = ["Scan Name"]
@@ -176,16 +178,23 @@ def test(args, test_list, model_list, net_input_shape):
             img_data = img_data[np.newaxis, :, :]
             sitk_img = sitk.GetImageFromArray(img_data)
             
-            save_output(output, fin_out_dir, img, args)
+            save_output(output, output_dir, img, args)
             gt_data = load_gt_mask(args, img)
-            save_qual_fig(output, gt_data, fig_out_dir, img, img_data)
+            save_qual_fig(output, gt_data, output_dir, img, img_data)
             
             row = compute_metrics(output, gt_data, img, sitk_img, args)
             writer.writerow(row)
 
+            if args.compute_dice:
+                dice_arr[i] = row[1]
+            if args.compute_jaccard:
+                jacc_arr[i] = row[2]
+            if args.compute_assd:
+                assd_arr[i] = row[3]
+
         row = ["Average Scores"]
         if args.compute_dice:
-            row.append(np.mean(dice_arr))  
+            row.append(np.mean(dice_arr))
         if args.compute_jaccard:
             row.append(np.mean(jacc_arr))
         if args.compute_assd:  
