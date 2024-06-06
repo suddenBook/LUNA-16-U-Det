@@ -29,7 +29,6 @@ def elastic_transform(image, alpha=2000, sigma=40, alpha_affine=40, random_state
     shape = image.shape
     shape_size = shape[:2]
 
-    # Random affine
     center_square = np.float32(shape_size) // 2
     square_size = min(shape_size) // 3
     pts1 = np.float32([

@@ -5,6 +5,7 @@ from glob import glob
 from tqdm import tqdm
 import SimpleITK as sitk
 import cv2
+import csv
 from sklearn.cluster import KMeans
 from skimage import measure
 
@@ -84,8 +85,7 @@ def process_nodule(ct_norm, annotations, origin, space, clahe, nodule_mask_dir, 
 
         if v_diam > 18:
             for j in range(n):
-                mask_neighbours[j] = cv2.bitwise_and(img_norm_neighbours[j], img_norm_neighbours[j],
-                                                     mask=cv2.dilate(mask_neighbours[j], kernel=np.ones((5, 5))))
+                mask_neighbours[j] = cv2.bitwise_and(img_norm_neighbours[j], img_norm_neighbours[j], mask=cv2.dilate(mask_neighbours[j], kernel=np.ones((5, 5))))
                 _, mask_neighbours[j] = cv2.threshold(mask_neighbours[j], threshold2, 255, cv2.THRESH_BINARY)
 
         centeral_area = img_norm[100:400, 100:400]
@@ -129,8 +129,8 @@ def process_nodule(ct_norm, annotations, origin, space, clahe, nodule_mask_dir, 
         extracted_lungs = cv2.bitwise_and(img_norm_improved, img_norm_improved, mask=external_contours)
 
         mask = mask.astype(np.uint8)
-        mask_3d = np.expand_dims(mask, axis=0)  # Convert 2D mask to 3D
-        extracted_lungs_3d = np.expand_dims(extracted_lungs, axis=0)  # Convert 2D lungs to 3D
+        mask_3d = np.expand_dims(mask, axis=0)
+        extracted_lungs_3d = np.expand_dims(extracted_lungs, axis=0)
         
         np.save(os.path.join(nodule_mask_dir, f"masks_{idx}.npy"), mask_3d)
         np.save(os.path.join(lungs_roi_dir, f"images_{idx}.npy"), extracted_lungs_3d)
@@ -140,11 +140,17 @@ def process_nodule(ct_norm, annotations, origin, space, clahe, nodule_mask_dir, 
                 img_norm_improved_neighbours[j] = img_norm_improved_neighbours[j].astype(np.uint8)
                 extracted_lungs_neighbours = cv2.bitwise_and(img_norm_improved_neighbours[j], img_norm_improved_neighbours[j], mask=external_contours)
                 mask_neighbours[j] = mask_neighbours[j].astype(np.uint8)
-                mask_neighbours_3d = np.expand_dims(mask_neighbours[j], axis=0)  # Convert 2D mask to 3D
-                extracted_lungs_neighbours_3d = np.expand_dims(extracted_lungs_neighbours, axis=0)  # Convert 2D lungs to 3D
+                mask_neighbours_3d = np.expand_dims(mask_neighbours[j], axis=0)
+                extracted_lungs_neighbours_3d = np.expand_dims(extracted_lungs_neighbours, axis=0)
                 
                 np.save(os.path.join(nodule_mask_dir, f"masks_{idx}_{j}.npy"), mask_neighbours_3d)
                 np.save(os.path.join(lungs_roi_dir, f"images_{idx}_{j}.npy"), extracted_lungs_neighbours_3d)
+
+def save_seriesuid_mapping(seriesuids, output_file):
+    with open(output_file, "w", newline="") as f:
+        writer = csv.writer(f)
+        for idx, seriesuid in enumerate(seriesuids):
+            writer.writerow([seriesuid, idx])
 
 def preprocess_data(root, target_root):
     file_list = glob(f"{root}/subset/*.mhd")
@@ -158,6 +164,8 @@ def preprocess_data(root, target_root):
 
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
 
+    seriesuids = []
+
     for i, file in tqdm(enumerate(np.unique(annotations_df['seriesuid'].values))):
         annotations = annotations_df[annotations_df["seriesuid"] == file]
         ct, origin, space = load_mhd(glob(f"{root}/subset*/{file}.mhd")[0])
@@ -165,6 +173,10 @@ def preprocess_data(root, target_root):
         ct_norm = cv2.normalize(ct, None, 0, 255, cv2.NORM_MINMAX)
         
         process_nodule(ct_norm, annotations, origin, space, clahe, nodule_mask_dir, lungs_roi_dir, i, num_z)
+
+        seriesuids.append(file)
+
+    save_seriesuid_mapping(seriesuids, os.path.join(target_root, "seriesuid_mapping.csv"))
 
 if __name__ == "__main__":
     root = os.path.normpath('./Dataset/')

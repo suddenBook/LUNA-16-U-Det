@@ -28,8 +28,7 @@ class BatchNormalization(layers.BatchNormalization):
 
 def ConvBlock(num_channels, kernel_size, strides, name, freeze_bn=False):
     def apply(x):
-        x = layers.Conv2D(
-            num_channels, kernel_size, strides=strides, padding="same", use_bias=False, name=f"{name}_conv")(x)
+        x = layers.Conv2D(num_channels, kernel_size, strides=strides, padding="same", use_bias=False, name=f"{name}_conv")(x)
         x = BatchNormalization(freeze=freeze_bn, name=f"{name}_bn")(x)
         x = layers.ReLU(name=f"{name}_relu")(x)
         return x
