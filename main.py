@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--steps", type=int, default=1000)
     parser.add_argument("--split_num", type=int, default=0, help="Which training split to train/test on.")
-    parser.add_argument("--net", type=str.lower, default="udet", choices=["unet", "udet", "bifpn"], help="Choose your network.")
+    parser.add_argument("--net", type=str.lower, default="udet", choices=["unet", "udet", "bifpn", "udet_small_sized"], help="Choose your network.")
     parser.add_argument("--train", type=int, default=0, choices=[0,1], help="Set to 1 to enable training.")
     parser.add_argument("--test", type=int, default=0, choices=[0,1], help="Set to 1 to enable testing.")
     parser.add_argument("--shuffle_data", type=int, default=1, choices=[0,1], help="Whether to shuffle the training data.")

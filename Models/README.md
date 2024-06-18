@@ -14,6 +14,17 @@ The U-Det model extends the U-Net architecture by integrating the Bi-FPN for enh
 - **Bi-FPN Integration**: After initial down-sampling layers, features are passed through a BiFPN layer to enhance feature representation before proceeding with up-sampling.
 - **Activation Function**: It supports the use of either the Mish or ReLU activation functions, configurable via the `--activation` argument.
 
+### U-Det Small-Sized Model
+
+The U-Det Small-Sized model is a specialized variant of the U-Det model, designed specifically for the segmentation of small-sized nodules, particularly those with a diameter of less than 5mm. This model is tailored to handle the challenges posed by the small scale and subtle features of these nodules.
+
+- **Architecture**: Similar to the standard U-Det model but includes deeper convolutional layers and more extensive use of the Bi-FPN for enhanced feature extraction at multiple scales. This helps in capturing the intricate details necessary for accurately segmenting small nodules.
+- **Increased Depth**: The model increases the depth by adding more convolutional layers, allowing it to learn more complex patterns and finer details which are crucial for small nodule detection.
+- **Bi-FPN Integration**: The integration of Bi-FPN is more extensive in this variant, with additional layers to improve the feature integration across different scales, crucial for detecting small and less conspicuous objects.
+- **Attention Mechanisms**: Incorporates attention mechanisms to focus the model more precisely on regions of interest, enhancing its ability to distinguish small nodules from the surrounding tissue.
+- **Activation Function**: Utilizes the Mish activation function extensively to maintain smooth gradients, which is beneficial for learning fine details without the risk of losing important features during training.
+- **Output Layers**: The output layers are designed to provide precise localization of small-sized nodules, using higher resolution feature maps from earlier stages of the network.
+
 ### Bi-FPN (Bidirectional Feature Pyramid Network)
 
 Bi-FPN enhances the multi-scale feature learning by allowing easy and fast multi-scale feature fusion.

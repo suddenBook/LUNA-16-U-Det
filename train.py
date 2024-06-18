@@ -88,7 +88,7 @@ def compile_model(args, net_input_shape, uncomp_model):
 
 def plot_training(training_history, args):
     f, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=(10, 10))
-    subtitle = f"{args.net}-{args.activation}"
+    subtitle = f"{args.net.upper()}-{args.activation}"
     f.suptitle(subtitle, fontsize=18)
 
     ax1.plot(training_history.history["dice_hard"])

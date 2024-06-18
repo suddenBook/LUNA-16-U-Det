@@ -20,7 +20,7 @@
 
 \newcommand{\dashedblock}[4]{
 	\draw[dashed, ultra thick, gray] (#1) rectangle (#2);
-	\node at (#3) [fill=white, font=\bfseries\large] {#4};
+	\node at (#3) [fill=white, font=\bfseries\LARGE] {#4};
 }
 
 \begin{document}
@@ -30,13 +30,13 @@
 
 	% Encoder
 	\pic[shift={(0, 0, 0)}] at (0, 0, 0) {RightBandedBox={name=cr1, xlabel={{"64", "64"}}, zlabel=I, fill=\ConvColor, bandfill=\ConvMishColor, height=20, width={2, 2}, depth=20}};
-	\pic[shift={(2, -5, 0)}] at (cr1-east) {Box={name=p1, caption=MaxPool, fill=\PoolColor, opacity=0.6, height=10, width=1, depth=10}};
+	\pic[shift={(2, -5, 0)}] at (cr1-east) {Box={name=p1, caption={\Large MaxPool}, fill=\PoolColor, opacity=0.6, height=10, width=1, depth=10}};
 	\pic[shift={(1, 0, 0)}] at (p1-east) {RightBandedBox={name=cr2, xlabel={{"128", "128"}}, zlabel=I/2, fill=\ConvColor, bandfill=\ConvMishColor, height=10, width={3.5, 3.5}, depth=10}};
-	\pic[shift={(2, -3, 0)}] at (cr2-east) {Box={name=p2, caption=MaxPool, fill=\PoolColor, opacity=0.6, height=5, width=1, depth=5}};
+	\pic[shift={(2, -3, 0)}] at (cr2-east) {Box={name=p2, caption={\Large MaxPool}, fill=\PoolColor, opacity=0.6, height=5, width=1, depth=5}};
 	\pic[shift={(1, 0, 0)}] at (p2-east) {RightBandedBox={name=cr3, xlabel={{"256", "256"}}, zlabel=I/4, fill=\ConvColor, bandfill=\ConvMishColor, height=5, width={4.5, 4.5}, depth=5}};
-	\pic[shift={(2, -3, 0)}] at (cr3-east) {Box={name=p3, caption=MaxPool, fill=\PoolColor, opacity=0.6, height=2.5, width=1, depth=2.5}};
+	\pic[shift={(2, -3, 0)}] at (cr3-east) {Box={name=p3, caption={\Large MaxPool}, fill=\PoolColor, opacity=0.6, height=2.5, width=1, depth=2.5}};
 	\pic[shift={(1, 0, 0)}] at (p3-east) {RightBandedBox={name=cr4, xlabel={{"512", "512"}}, zlabel=I/8, fill=\ConvColor, bandfill=\ConvMishColor, height=2.5, width={6, 6}, depth=2.5}};
-	\pic[shift={(2, -3, 0)}] at (cr4-east) {Box={name=p4, caption=MaxPool, fill=\PoolColor, opacity=0.6, height=1.25, width=1, depth=1.25}};
+	\pic[shift={(2, -3, 0)}] at (cr4-east) {Box={name=p4, caption={\Large MaxPool}, fill=\PoolColor, opacity=0.6, height=1.25, width=1, depth=1.25}};
 
 	% Bottleneck
 	\pic[shift={(1, 0, 0)}] at (p4-east) {RightBandedBox={name=cr5, zlabel=I/16, xlabel={{"1024", "1024"}}, fill=\ConvColor, bandfill=\ConvMishColor, height=1.25, width={8, 8}, depth=1.25}};
@@ -49,24 +49,24 @@
 	\pic[shift={(2, 0, 0)}] at (cr5-east) {Box={name=bifpn5, fill=\BiFPNColor, height=1.25, width=1, depth=1.25}};
 
 	% Decoder 
-	\pic[shift={(2, 0, 0)}] at (bifpn5-east) {Box={name=up4, caption=Unpool, fill=\UnpoolColor, opacity=0.6, height=2.5, width=1, depth=2.5}};
+	\pic[shift={(2, 0, 0)}] at (bifpn5-east) {Box={name=up4, caption={\Large UnPool}, fill=\UnpoolColor, opacity=0.6, height=2.5, width=1, depth=2.5}};
 	\pic[shift={(1, 0, 0)}] at (up4-east) {RightBandedBox={name=ucr4, xlabel={{"512", "512"}}, zlabel=I/8, fill=\ConvColor, bandfill=\ConvMishColor, height=2.5, width={6, 6}, depth=2.5}};
-	\pic[shift={(-1.2, 3, 0)}] at (ucr4-east) {Ball={name=cat4, caption=Concat, fill=\ConcatColor, radius=2.5, logo=$||$}};
+	\pic[shift={(-1.2, 3, 0)}] at (ucr4-east) {Ball={name=cat4, caption={\Large Concat}, fill=\ConcatColor, radius=2.5, logo=$||$}};
 	\pic[shift={(1.5, 0, 0)}] at (cat4-east) {RightBandedBox={name=ucr4a, xlabel={{"512", "512"}}, zlabel=I/8, fill=\ConvColor, bandfill=\ConvMishColor, height=2.5, width={6, 6}, depth=2.5}};
 
-	\pic[shift={(2, 0, 0)}] at (ucr4a-east) {Box={name=up3, caption=Unpool, fill=\UnpoolColor, opacity=0.6, height=5, width=1, depth=5}};
+	\pic[shift={(2, 0, 0)}] at (ucr4a-east) {Box={name=up3, caption={\Large UnPool}, fill=\UnpoolColor, opacity=0.6, height=5, width=1, depth=5}};
 	\pic[shift={(1, 0, 0)}] at (up3-east) {RightBandedBox={name=ucr3, xlabel={{"256", "256"}}, zlabel=I/4, fill=\ConvColor, bandfill=\ConvMishColor, height=5, width={4.5, 4.5}, depth=5}};
-	\pic[shift={(-0.85, 3, 0)}] at (ucr3-east) {Ball={name=cat3, caption=Concat, fill=\ConcatColor, radius=2.5, logo=$||$}};
+	\pic[shift={(-0.85, 3, 0)}] at (ucr3-east) {Ball={name=cat3, caption={\Large Concat}, fill=\ConcatColor, radius=2.5, logo=$||$}};
 	\pic[shift={(1.5, 0, 0)}] at (cat3-east) {RightBandedBox={name=ucr3a, xlabel={{"256", "256"}}, zlabel=I/4, fill=\ConvColor, bandfill=\ConvMishColor, height=5, width={4.5, 4.5}, depth=5}};
 
-	\pic[shift={(2, 0, 0)}] at (ucr3a-east) {Box={name=up2, caption=Unpool, fill=\UnpoolColor, opacity=0.6, height=10, width=1, depth=10}};
+	\pic[shift={(2, 0, 0)}] at (ucr3a-east) {Box={name=up2, caption={\Large UnPool}, fill=\UnpoolColor, opacity=0.6, height=10, width=1, depth=10}};
 	\pic[shift={(1, 0, 0)}] at (up2-east) {RightBandedBox={name=ucr2, xlabel={{"128", "128"}}, zlabel=I/2, fill=\ConvColor, bandfill=\ConvMishColor, height=10, width={3.5, 3.5}, depth=10}};
-	\pic[shift={(-0.72, 3, 0)}] at (ucr2-east) {Ball={name=cat2, caption=Concat, fill=\ConcatColor, radius=2.5, logo=$||$}};
+	\pic[shift={(-0.72, 3, 0)}] at (ucr2-east) {Ball={name=cat2, caption={\Large Concat}, fill=\ConcatColor, radius=2.5, logo=$||$}};
 	\pic[shift={(1.8, 0, 0)}] at (cat2-east) {RightBandedBox={name=ucr2a, xlabel={{"128", "128"}}, zlabel=I/2, fill=\ConvColor, bandfill=\ConvMishColor, height=10, width={3.5, 3.5}, depth=10}};
 
-	\pic[shift={(2, 0, 0)}] at (ucr2a-east) {Box={name=up1, caption=Unpool, fill=\UnpoolColor, opacity=0.6, height=20, width=1, depth=20}};
+	\pic[shift={(2, 0, 0)}] at (ucr2a-east) {Box={name=up1, caption={\Large UnPool}, fill=\UnpoolColor, opacity=0.6, height=20, width=1, depth=20}};
 	\pic[shift={(1, 0, 0)}] at (up1-east) {RightBandedBox={name=ucr1, xlabel={{"64", "64"}}, zlabel=I, fill=\ConvColor, bandfill=\ConvMishColor, height=20, width={2.5, 2.5}, depth=20}};
-	\pic[shift={(-0.5, 5, 0)}] at (ucr1-east) {Ball={name=cat1, caption=Concat, fill=\ConcatColor, radius=2.5, logo=$||$}};
+	\pic[shift={(-0.5, 5, 0)}] at (ucr1-east) {Ball={name=cat1, caption={\Large Concat}, fill=\ConcatColor, radius=2.5, logo=$||$}};
 	\pic[shift={(2, 0, 0)}] at (cat1-east) {RightBandedBox={name=ucr1a, xlabel={{"64", "64"}}, zlabel=I, fill=\ConvColor, bandfill=\ConvMishColor, height=20, width={2.5, 2.5}, depth=20}};
 
 	% Output
@@ -137,17 +137,17 @@
 
 	% Legend
 	\node (conv) at (-1, -10) [fill=\ConvColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.1, -10) {Conv};
+	\node at (0.1, -10) {\Large Conv};
 	\node (relu) at (-1, -11) [fill=\ConvMishColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.7, -11) {Conv + Mish};
+	\node at (1, -11) {\Large Conv + Mish};
 	\node (pool) at (-1, -12) [fill=\PoolColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.6, -12) {Max Pooling};
+	\node at (0.95, -12) {\Large Max Pooling};
 	\node (concat) at (-1, -14) [fill=\BiFPNColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.3, -14) {Bi-FPN};
+	\node at (0.5, -14) {\Large Bi-FPN};
 	\node (unpool) at (-1, -13) [fill=\UnpoolColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.6, -13) {Upsampling};
+	\node at (0.85, -13) {\Large Upsampling};
 	\node (conv11) at (-1, -15) [fill=\ConvOneByOneColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.5, -15) {1$\times$1 Conv};
+	\node at (0.8, -15) {\Large 1$\times$1 Conv};
 
 \end{tikzpicture}
 \end{document}
