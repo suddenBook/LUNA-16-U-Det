@@ -1,0 +1,153 @@
+\documentclass[border=8pt, multi, tikz]{standalone}
+\usepackage{import}
+\subimport{}{init}
+\usepackage{tikz}
+\usepackage{tikz-3dplot}
+\usetikzlibrary{shapes.geometric, arrows, 3d, calc, positioning}
+
+\def\ConvColor{rgb:yellow, 5;red, 2.5;white, 5}
+\def\ConvMishColor{rgb:yellow, 5;red, 5;white, 5}
+\def\PoolColor{rgb:red, 1;black, 0.3}
+\def\UnpoolColor{rgb:blue, 2;green, 1;black, 0.3}
+\def\ConcatColor{rgb:blue, 5;red, 2.5;white, 5}
+\def\BiFPNColor{rgb:green, 5;black, 2}
+\def\ConvOneByOneColor{rgb:magenta, 5;black, 7}
+
+\newcommand{\copymidarrow}{
+	\tikz
+	\draw[-Stealth,line width =0.8mm,draw={rgb:blue,4;red,1;green,1;black,3}] (-0.3,0) -- ++(0.3,0);
+}
+
+\newcommand{\dashedblock}[4]{
+	\draw[dashed, ultra thick, gray] (#1) rectangle (#2);
+	\node at (#3) [fill=white, font=\bfseries\large] {#4};
+}
+
+\begin{document}
+\begin{tikzpicture}
+	\tikzstyle{connection}=[ultra thick, every node/.style={sloped, allow upside down}, draw=\edgecolor, opacity=0.7]
+	\tikzstyle{copyconnection}=[ultra thick, every node/.style={sloped, allow upside down}, draw={rgb:blue, 4;red, 1;green, 1;black, 3}, opacity=0.7]
+
+	% Encoder
+	\pic[shift={(0, 0, 0)}] at (0, 0, 0) {RightBandedBox={name=cr1, xlabel={{"64", "64"}}, zlabel=I, fill=\ConvColor, bandfill=\ConvMishColor, height=20, width={2, 2}, depth=20}};
+	\pic[shift={(2, -5, 0)}] at (cr1-east) {Box={name=p1, caption=MaxPool, fill=\PoolColor, opacity=0.6, height=10, width=1, depth=10}};
+	\pic[shift={(1, 0, 0)}] at (p1-east) {RightBandedBox={name=cr2, xlabel={{"128", "128"}}, zlabel=I/2, fill=\ConvColor, bandfill=\ConvMishColor, height=10, width={3.5, 3.5}, depth=10}};
+	\pic[shift={(2, -3, 0)}] at (cr2-east) {Box={name=p2, caption=MaxPool, fill=\PoolColor, opacity=0.6, height=5, width=1, depth=5}};
+	\pic[shift={(1, 0, 0)}] at (p2-east) {RightBandedBox={name=cr3, xlabel={{"256", "256"}}, zlabel=I/4, fill=\ConvColor, bandfill=\ConvMishColor, height=5, width={4.5, 4.5}, depth=5}};
+	\pic[shift={(2, -3, 0)}] at (cr3-east) {Box={name=p3, caption=MaxPool, fill=\PoolColor, opacity=0.6, height=2.5, width=1, depth=2.5}};
+	\pic[shift={(1, 0, 0)}] at (p3-east) {RightBandedBox={name=cr4, xlabel={{"512", "512"}}, zlabel=I/8, fill=\ConvColor, bandfill=\ConvMishColor, height=2.5, width={6, 6}, depth=2.5}};
+	\pic[shift={(2, -3, 0)}] at (cr4-east) {Box={name=p4, caption=MaxPool, fill=\PoolColor, opacity=0.6, height=1.25, width=1, depth=1.25}};
+
+	% Bottleneck
+	\pic[shift={(1, 0, 0)}] at (p4-east) {RightBandedBox={name=cr5, zlabel=I/16, xlabel={{"1024", "1024"}}, fill=\ConvColor, bandfill=\ConvMishColor, height=1.25, width={8, 8}, depth=1.25}};
+
+	% BiFPN 
+	\pic[shift={(24, 0, 0)}] at (cr1-east) {Box={name=bifpn1, fill=\BiFPNColor, height=20, width=1, depth=20}};
+	\pic[shift={(19, 0, 0)}] at (cr2-east) {Box={name=bifpn2, fill=\BiFPNColor, height=10, width=1, depth=10}};
+	\pic[shift={(14, 0, 0)}] at (cr3-east) {Box={name=bifpn3, fill=\BiFPNColor, height=5, width=1, depth=5}};
+	\pic[shift={(8.4, 0, 0)}] at (cr4-east) {Box={name=bifpn4, fill=\BiFPNColor, height=2.5, width=1, depth=2.5}};
+	\pic[shift={(2, 0, 0)}] at (cr5-east) {Box={name=bifpn5, fill=\BiFPNColor, height=1.25, width=1, depth=1.25}};
+
+	% Decoder 
+	\pic[shift={(2, 0, 0)}] at (bifpn5-east) {Box={name=up4, caption=Unpool, fill=\UnpoolColor, opacity=0.6, height=2.5, width=1, depth=2.5}};
+	\pic[shift={(1, 0, 0)}] at (up4-east) {RightBandedBox={name=ucr4, xlabel={{"512", "512"}}, zlabel=I/8, fill=\ConvColor, bandfill=\ConvMishColor, height=2.5, width={6, 6}, depth=2.5}};
+	\pic[shift={(-1.2, 3, 0)}] at (ucr4-east) {Ball={name=cat4, caption=Concat, fill=\ConcatColor, radius=2.5, logo=$||$}};
+	\pic[shift={(1.5, 0, 0)}] at (cat4-east) {RightBandedBox={name=ucr4a, xlabel={{"512", "512"}}, zlabel=I/8, fill=\ConvColor, bandfill=\ConvMishColor, height=2.5, width={6, 6}, depth=2.5}};
+
+	\pic[shift={(2, 0, 0)}] at (ucr4a-east) {Box={name=up3, caption=Unpool, fill=\UnpoolColor, opacity=0.6, height=5, width=1, depth=5}};
+	\pic[shift={(1, 0, 0)}] at (up3-east) {RightBandedBox={name=ucr3, xlabel={{"256", "256"}}, zlabel=I/4, fill=\ConvColor, bandfill=\ConvMishColor, height=5, width={4.5, 4.5}, depth=5}};
+	\pic[shift={(-0.85, 3, 0)}] at (ucr3-east) {Ball={name=cat3, caption=Concat, fill=\ConcatColor, radius=2.5, logo=$||$}};
+	\pic[shift={(1.5, 0, 0)}] at (cat3-east) {RightBandedBox={name=ucr3a, xlabel={{"256", "256"}}, zlabel=I/4, fill=\ConvColor, bandfill=\ConvMishColor, height=5, width={4.5, 4.5}, depth=5}};
+
+	\pic[shift={(2, 0, 0)}] at (ucr3a-east) {Box={name=up2, caption=Unpool, fill=\UnpoolColor, opacity=0.6, height=10, width=1, depth=10}};
+	\pic[shift={(1, 0, 0)}] at (up2-east) {RightBandedBox={name=ucr2, xlabel={{"128", "128"}}, zlabel=I/2, fill=\ConvColor, bandfill=\ConvMishColor, height=10, width={3.5, 3.5}, depth=10}};
+	\pic[shift={(-0.72, 3, 0)}] at (ucr2-east) {Ball={name=cat2, caption=Concat, fill=\ConcatColor, radius=2.5, logo=$||$}};
+	\pic[shift={(1.8, 0, 0)}] at (cat2-east) {RightBandedBox={name=ucr2a, xlabel={{"128", "128"}}, zlabel=I/2, fill=\ConvColor, bandfill=\ConvMishColor, height=10, width={3.5, 3.5}, depth=10}};
+
+	\pic[shift={(2, 0, 0)}] at (ucr2a-east) {Box={name=up1, caption=Unpool, fill=\UnpoolColor, opacity=0.6, height=20, width=1, depth=20}};
+	\pic[shift={(1, 0, 0)}] at (up1-east) {RightBandedBox={name=ucr1, xlabel={{"64", "64"}}, zlabel=I, fill=\ConvColor, bandfill=\ConvMishColor, height=20, width={2.5, 2.5}, depth=20}};
+	\pic[shift={(-0.5, 5, 0)}] at (ucr1-east) {Ball={name=cat1, caption=Concat, fill=\ConcatColor, radius=2.5, logo=$||$}};
+	\pic[shift={(2, 0, 0)}] at (cat1-east) {RightBandedBox={name=ucr1a, xlabel={{"64", "64"}}, zlabel=I, fill=\ConvColor, bandfill=\ConvMishColor, height=20, width={2.5, 2.5}, depth=20}};
+
+	% Output
+	\pic[shift={(2, 0, 0)}] at (ucr1a-east) {Box={name=out, caption={1$\times$1 Conv}, fill=\ConvOneByOneColor, height=20, width=1, depth=20}};
+
+	% Draw connections
+	\path (cr1-east) -- (p1-west|-cr1-west) coordinate[pos=0.5] (crp1-mid);
+	\path (cr2-east) -- (p2-west|-cr2-west) coordinate[pos=0.5] (crp2-mid);
+	\path (cr3-east) -- (p3-west|-cr3-west) coordinate[pos=0.5] (crp3-mid);
+	\path (cr4-east) -- (p4-west|-cr4-west) coordinate[pos=0.5] (crp4-mid);
+
+	\draw[connection](cr1-east)--node{\midarrow}(crp1-mid)--node{\midarrow}(p1-west-|crp1-mid)--node{\midarrow}(p1-west);
+	\draw[connection](cr2-east)--node{\midarrow}(crp2-mid)--node{\midarrow}(p2-west-|crp2-mid)--node{\midarrow}(p2-west);
+	\draw[connection](cr3-east)--node{\midarrow}(crp3-mid)--node{\midarrow}(p3-west-|crp3-mid)--node{\midarrow}(p3-west);
+	\draw[connection](cr4-east)--node{\midarrow}(crp4-mid)--node{\midarrow}(p4-west-|crp4-mid)--node{\midarrow}(p4-west);
+
+	\draw[connection](p1-east)--node{\midarrow}(cr2-west);
+	\draw[connection](p2-east)--node{\midarrow}(cr3-west);
+	\draw[connection](p3-east)--node{\midarrow}(cr4-west);
+	\draw[connection](p4-east)--node{\midarrow}(cr5-west);
+
+	\draw[connection](cr1-east)--node{\midarrow}(bifpn1-west);
+	\draw[connection](cr2-east)--node{\midarrow}(bifpn2-west);
+	\draw[connection](cr3-east)--node{\midarrow}(bifpn3-west);
+	\draw[connection](cr4-east)--node{\midarrow}(bifpn4-west);
+	\draw[connection](cr5-east)--node{\midarrow}(bifpn5-west);
+
+	\draw[copyconnection](bifpn1-east)--node{\copymidarrow}(cat1-west);
+	\draw[copyconnection](bifpn2-east)--node{\copymidarrow}(cat2-west);
+	\draw[copyconnection](bifpn3-east)--node{\copymidarrow}(cat3-west);
+	\draw[copyconnection](bifpn4-east)--node{\copymidarrow}(cat4-west);
+	\draw[copyconnection](bifpn5-east)--node{\copymidarrow}(up4-west);
+
+	\draw[copyconnection](up4-east)--node{\copymidarrow}(ucr4-west);
+	\draw[copyconnection](up3-east)--node{\copymidarrow}(ucr3-west);
+	\draw[copyconnection](up2-east)--node{\copymidarrow}(ucr2-west);
+	\draw[copyconnection](up1-east)--node{\copymidarrow}(ucr1-west);
+
+	\draw[copyconnection](ucr4-north)--node{\copymidarrow}(cat4-south);
+	\draw[copyconnection](ucr3-north)--node{\copymidarrow}(cat3-south);
+	\draw[copyconnection](ucr2-north)--node{\copymidarrow}(cat2-south);
+	\draw[copyconnection](ucr1-north)--node{\copymidarrow}(cat1-south);
+
+	\draw[copyconnection](bifpn5-east)--node{\midarrow}(up4-west);
+	
+	\draw[copyconnection](up4-east)--node{\midarrow}(ucr4-west);
+	\draw[copyconnection](cat4-east)--node{\midarrow}(ucr4a-west);
+	\draw[copyconnection](ucr4a-east)--node{\midarrow}(up3-west);
+
+	\draw[copyconnection](up3-east)--node{\midarrow}(ucr3-west);
+	\draw[copyconnection](cat3-east)--node{\midarrow}(ucr3a-west);
+	\draw[copyconnection](ucr3a-east)--node{\midarrow}(up2-west);
+
+	\draw[copyconnection](up2-east)--node{\midarrow}(ucr2-west);
+	\draw[copyconnection](cat2-east)--node{\midarrow}(ucr2a-west);
+	\draw[copyconnection](ucr2a-east)--node{\midarrow}(up1-west);
+
+	\draw[copyconnection](up1-east)--node{\midarrow}(ucr1-west);
+	\draw[copyconnection](cat1-east)--node{\midarrow}(ucr1a-west);
+
+	\draw[copyconnection](ucr1a-east)--node{\midarrow}(out-west);
+
+	% Separate sections
+	\dashedblock{-2, -16}{23, 6}{10, 5}{Encoder Path}
+	\dashedblock{23, -16}{26, 6}{24.5, 5}{Bi-FPN}
+	\dashedblock{26, -16}{57, 6}{40, 5}{Decoder Path}
+	\dashedblock{57, -16}{60, 6}{58.5, 5}{Output}
+
+	% Legend
+	\node (conv) at (-1, -10) [fill=\ConvColor, minimum width=0.6cm, minimum height=0.3cm] {};
+	\node at (0.1, -10) {Conv};
+	\node (relu) at (-1, -11) [fill=\ConvMishColor, minimum width=0.6cm, minimum height=0.3cm] {};
+	\node at (0.7, -11) {Conv + Mish};
+	\node (pool) at (-1, -12) [fill=\PoolColor, minimum width=0.6cm, minimum height=0.3cm] {};
+	\node at (0.6, -12) {Max Pooling};
+	\node (concat) at (-1, -14) [fill=\BiFPNColor, minimum width=0.6cm, minimum height=0.3cm] {};
+	\node at (0.3, -14) {Bi-FPN};
+	\node (unpool) at (-1, -13) [fill=\UnpoolColor, minimum width=0.6cm, minimum height=0.3cm] {};
+	\node at (0.6, -13) {Upsampling};
+	\node (conv11) at (-1, -15) [fill=\ConvOneByOneColor, minimum width=0.6cm, minimum height=0.3cm] {};
+	\node at (0.5, -15) {1$\times$1 Conv};
+
+\end{tikzpicture}
+\end{document}

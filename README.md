@@ -1,6 +1,12 @@
 ## Overview
 
-This project is designed to perform lung nodule detection and classification using the [LUNA16](https://luna16.grand-challenge.org/Home/) dataset, which is a large collection of annotated CT scans for lung nodule detection. The primary goal is to preprocess the data, train a model to detect lung nodules, and evaluate the model's performance.
+This project focuses on lung nodule detection and classification using the [LUNA16](https://luna16.grand-challenge.org/Home/) dataset, featuring a comprehensive collection of annotated CT scans. The core of this project is the implementation of the U-Det model, a sophisticated architecture designed specifically for high accuracy in lung nodule detection. The primary objectives are to preprocess the dataset, train the U-Det model, and evaluate its effectiveness in identifying lung nodules.
+
+## Model Architecture
+
+For a detailed view of the U-Det model architecture used in this project, refer to the architecture diagram provided in the PDF file:
+
+[View U-Det Model Architecture](./Tools/Visualize/Plot_CNN_Architecture/U-Det.pdf)
 
 ## Installation
 
@@ -126,6 +132,7 @@ This project utilizes concepts and code from several sources which have been ins
 - [U-Det: A modified U-Net architecture with bidirectional feature network for lung nodule segmentation](https://github.com/Nik-V9/U-Det)
 - [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
 - [RadIO: A library for data science research of computed tomography imaging](https://github.com/analysiscenter/radio)
+- [PlotNeuralNet: Latex code for making neural networks diagrams](https://github.com/mjribeiro/PlotNeuralNet/)
 
 ## Citation
 
