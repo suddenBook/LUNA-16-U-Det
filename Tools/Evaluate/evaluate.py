@@ -92,6 +92,9 @@ def evaluate(model_name, activation, data_root, annotations_path, results_dir, s
     elif model_name == 'udet':
         from Models.UDet import UDet
         model = UDet(input_shape=(512, 512, 5))
+    elif model_name == 'udet_small_sized':
+        from Models.UDet_small_sized import UDet_small_sized
+        model = UDet_small_sized(input_shape=(512, 512, 5))
     else:
         raise ValueError(f'Unknown model: {model_name}')
 

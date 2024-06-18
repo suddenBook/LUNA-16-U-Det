@@ -19,7 +19,7 @@
 
 \newcommand{\dashedblock}[4]{
 	\draw[dashed, ultra thick, gray] (#1) rectangle (#2);
-	\node at (#3) [fill=white, font=\bfseries\Large] {#4};
+	\node at (#3) [fill=white, font=\bfseries\huge] {#4};
 }
 
 \begin{document}
@@ -28,40 +28,40 @@
 	\tikzstyle{copyconnection}=[ultra thick, every node/.style={sloped, allow upside down}, draw={rgb:blue, 4;red, 1;green, 1;black, 3}, opacity=0.7]
 
 	% Encoder
-	\pic[shift={(0,0,0)}] at (0,0,0) {RightBandedBox={name=cr0,caption=Input,zlabel=128$\times$128$\times$64,fill=\ConvColor,bandfill=\ConvReluColor,height=20,width={2,2},depth=20}};
-	\pic[shift={(2,-5,0)}] at (cr0-east) {Box={caption=Residual,name=res0,fill=\ResidualColor,height=18,width=1,depth=18}};
-	\pic[shift={(2,0,0)}] at (res0-east) {Box={name=p0,caption=MaxPool,fill=\PoolColor,height=15,width=1,depth=15}};
+	\pic[shift={(0,0,0)}] at (0,0,0) {RightBandedBox={name=cr0,caption={\Large Input},zlabel=128$\times$128$\times$64,fill=\ConvColor,bandfill=\ConvReluColor,height=20,width={2,2},depth=20}};
+	\pic[shift={(2,-5,0)}] at (cr0-east) {Box={caption={\Large Residual},name=res0,fill=\ResidualColor,height=18,width=1,depth=18}};
+	\pic[shift={(2,0,0)}] at (res0-east) {Box={name=p0,caption={\Large MaxPool},fill=\PoolColor,height=15,width=1,depth=15}};
 
-	\pic[shift={(2,0,0)}] at (p0-east) {RightBandedBox={name=cr1,caption=64$\times$64$\times$128,fill=\ConvColor,bandfill=\ConvReluColor,height=15,width={3,3},depth=15}};
-	\pic[shift={(2,-5,0)}] at (cr1-east) {Box={caption=Residual,name=res1,fill=\ResidualColor,height=15,width=1,depth=15}};
-	\pic[shift={(2,0,0)}] at (res1-east) {Box={name=p1,caption=MaxPool,fill=\PoolColor,height=10,width=1,depth=10}};
+	\pic[shift={(2,0,0)}] at (p0-east) {RightBandedBox={name=cr1,zlabel=64$\times$64$\times$128,fill=\ConvColor,bandfill=\ConvReluColor,height=15,width={3,3},depth=15}};
+	\pic[shift={(2,-5,0)}] at (cr1-east) {Box={caption={\Large Residual},name=res1,fill=\ResidualColor,height=15,width=1,depth=15}};
+	\pic[shift={(2,0,0)}] at (res1-east) {Box={name=p1,caption={\Large MaxPool},fill=\PoolColor,height=10,width=1,depth=10}};
 
-	\pic[shift={(2,0,0)}] at (p1-east) {RightBandedBox={name=cr2,caption=32$\times$32$\times$256,fill=\ConvColor,bandfill=\ConvReluColor,height=10,width={4,4},depth=10}};
-	\pic[shift={(2,-5,0)}] at (cr2-east) {Box={caption=Residual,name=res2,fill=\ResidualColor,height=16,width=1,depth=16}};
-	\pic[shift={(2,0,0)}] at (res2-east) {Box={name=p2,caption=MaxPool,fill=\PoolColor,height=7,width=1,depth=7}};
+	\pic[shift={(2,0,0)}] at (p1-east) {RightBandedBox={name=cr2,zlabel=32$\times$32$\times$256,fill=\ConvColor,bandfill=\ConvReluColor,height=10,width={4,4},depth=10}};
+	\pic[shift={(2,-5,0)}] at (cr2-east) {Box={caption={\Large Residual},name=res2,fill=\ResidualColor,height=16,width=1,depth=16}};
+	\pic[shift={(2,0,0)}] at (res2-east) {Box={name=p2,caption={\Large MaxPool},fill=\PoolColor,height=7,width=1,depth=7}};
 
-	\pic[shift={(2,0,0)}] at (p2-east) {RightBandedBox={name=cr3,caption=16$\times$16$\times$512,fill=\ConvColor,bandfill=\ConvReluColor,height=8,width={5,5},depth=8}};
-	\pic[shift={(2,-5,0)}] at (cr3-east) {Box={caption=Residual,name=res3,fill=\ResidualColor,height=10,width=1,depth=10}};
-	\pic[shift={(2,0,0)}] at (res3-east) {Box={name=p3,caption=MaxPool,fill=\PoolColor,height=4,width=1,depth=4}};
+	\pic[shift={(2,0,0)}] at (p2-east) {RightBandedBox={name=cr3,zlabel=16$\times$16$\times$512,fill=\ConvColor,bandfill=\ConvReluColor,height=8,width={5,5},depth=8}};
+	\pic[shift={(2,-5,0)}] at (cr3-east) {Box={caption={\Large Residual},name=res3,fill=\ResidualColor,height=10,width=1,depth=10}};
+	\pic[shift={(2,0,0)}] at (res3-east) {Box={name=p3,caption={\Large MaxPool},fill=\PoolColor,height=4,width=1,depth=4}};
 
 	% Bottleneck
-	\pic[shift={(2,0,0)}] at (p3-east) {RightBandedBox={name=cr4,caption=8$\times$8$\times$1024,fill=\ConvColor,bandfill=\ConvReluColor,height=4,width={5,5},depth=4}};
+	\pic[shift={(2,0,0)}] at (p3-east) {RightBandedBox={name=cr4,zlabel=8$\times$8$\times$1024,fill=\ConvColor,bandfill=\ConvReluColor,height=4,width={5,5},depth=4}};
 
 	% Decoder 
-	\pic[shift={(2,5,0)}] at (cr4-east) {Box={name=up3,caption=Unpool,fill=\UnpoolColor,height=5,width=1,depth=5}};
-	\pic[shift={(2,0,0)}] at (up3-east) {RightBandedBox={name=ucr3,caption=16$\times$16$\times$512,fill=\ConvColor,bandfill=\ConvReluColor,height=8,width={5,5},depth=8}};
+	\pic[shift={(2,5,0)}] at (cr4-east) {Box={name=up3,caption={\Large UnPool},fill=\UnpoolColor,height=5,width=1,depth=5}};
+	\pic[shift={(2,0,0)}] at (up3-east) {RightBandedBox={name=ucr3,zlabel=16$\times$16$\times$512,fill=\ConvColor,bandfill=\ConvReluColor,height=8,width={5,5},depth=8}};
 
-	\pic[shift={(2,5,0)}] at (ucr3-east) {Box={name=up2,caption=Unpool,fill=\UnpoolColor,height=12,width=1,depth=12}};
-	\pic[shift={(2,0,0)}] at (up2-east) {RightBandedBox={name=ucr2,caption=32$\times$32$\times$256,fill=\ConvColor,bandfill=\ConvReluColor,height=12,width={4,4},depth=12}};
+	\pic[shift={(2,5,0)}] at (ucr3-east) {Box={name=up2,caption={\Large UnPool},fill=\UnpoolColor,height=12,width=1,depth=12}};
+	\pic[shift={(2,0,0)}] at (up2-east) {RightBandedBox={name=ucr2,zlabel=32$\times$32$\times$256,fill=\ConvColor,bandfill=\ConvReluColor,height=12,width={4,4},depth=12}};
 
-	\pic[shift={(2,5,0)}] at (ucr2-east) {Box={name=up1,caption=Unpool,fill=\UnpoolColor,height=15,width=1,depth=15}};
-	\pic[shift={(2,0,0)}] at (up1-east) {RightBandedBox={name=ucr1,caption=64$\times$64$\times$128,fill=\ConvColor,bandfill=\ConvReluColor,height=15,width={3,3},depth=15}};
+	\pic[shift={(2,5,0)}] at (ucr2-east) {Box={name=up1,caption={\Large UnPool},fill=\UnpoolColor,height=15,width=1,depth=15}};
+	\pic[shift={(2,0,0)}] at (up1-east) {RightBandedBox={name=ucr1,zlabel=64$\times$64$\times$128,fill=\ConvColor,bandfill=\ConvReluColor,height=15,width={3,3},depth=15}};
 
-	\pic[shift={(2,5,0)}] at (ucr1-east) {Box={name=up0,caption=Unpool,fill=\UnpoolColor,height=20,width=1,depth=20}};
-	\pic[shift={(2,0,0)}] at (up0-east) {RightBandedBox={name=ucr0,caption=128$\times$128$\times$64,fill=\ConvColor,bandfill=\ConvReluColor,height=20,width={2,2},depth=20}};
+	\pic[shift={(2,5,0)}] at (ucr1-east) {Box={name=up0,caption={\Large UnPool},fill=\UnpoolColor,height=20,width=1,depth=20}};
+	\pic[shift={(2,0,0)}] at (up0-east) {RightBandedBox={name=ucr0,zlabel=128$\times$128$\times$64,fill=\ConvColor,bandfill=\ConvReluColor,height=20,width={2,2},depth=20}};
 
 	% Output
-	\pic[shift={(4,0,0)}] at (ucr0-east) {Box={name=out,caption=Softmax,fill=\SoftmaxColor,height=20,width=1,depth=20}};
+	\pic[shift={(4,0,0)}] at (ucr0-east) {Box={name=out,caption={\Large Softmax},fill=\SoftmaxColor,height=20,width=1,depth=20}};
 
 	% Draw connections
 	\draw[connection](res0-east)--node{\midarrow}(p0-west);
@@ -97,17 +97,17 @@
 
 	% Legend
 	\node (conv) at (-1, -18) [fill=\ConvColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0, -18) {Conv};
+	\node at (0.5, -18) {\LARGE Conv};
 	\node (relu) at (-1, -19) [fill=\ConvReluColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.7, -19) {Conv + ReLU};
+	\node at (1.6, -19) {\LARGE Conv + ReLU};
 	\node (conv11) at (-1, -23) [fill=\ResidualColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.4, -23) {Residual};
+	\node at (1.05, -23) {\LARGE Residual};
 	\node (pool) at (-1, -20) [fill=\PoolColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.6, -20) {Max Pooling};
+	\node at (1.4, -20) {\LARGE Max Pooling};
 	\node (unpool) at (-1, -21) [fill=\UnpoolColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.6, -21) {Upsampling};
+	\node at (1.33, -21) {\LARGE Upsampling};
 	\node (concat) at (-1, -22) [fill=\SoftmaxColor, minimum width=0.6cm, minimum height=0.3cm] {};
-	\node at (0.3, -22) {Output};
+	\node at (0.85, -22) {\LARGE Output};
 
 \end{tikzpicture}
 \end{document}

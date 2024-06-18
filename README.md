@@ -93,37 +93,37 @@ python main.py --data_root_dir /path/to/your/Data/ --train 1 --net bifpn --epoch
 
 Here is a detailed description of all the arguments used in the `main.py` script:
 
-| Argument            | Type  | Default  | Options                      | Description                                                                   |
-| ------------------- | ----- | -------- | ---------------------------- | ----------------------------------------------------------------------------- |
-| `--data_root_dir`   | str   | Required |                              | The root directory for your data.                                             |
-| `--weights_path`    | str   |          |                              | Path to the trained model weights. Set to "" if none.                         |
-| `--retrain`         | int   | 0        | 0, 1                         | Whether to retrain the model from scratch.                                    |
-| `--epochs`          | int   | 20       |                              | Number of epochs to train the model.                                          |
-| `--steps`           | int   | 1000     |                              | Number of steps per epoch.                                                    |
-| `--split_num`       | int   | 0        |                              | Which training split to train/test on.                                        |
-| `--net`             | str   | udet     | unet, udet, bifpn            | Choose your network architecture.                                             |
-| `--activation`      | str   | mish     | relu, mish                   | Activation function for the model.                                            |
-| `--train`           | int   | 0        | 0, 1                         | Set to 1 to enable training mode.                                             |
-| `--test`            | int   | 0        | 0, 1                         | Set to 1 to enable testing mode.                                              |
-| `--shuffle_data`    | int   | 1        | 0, 1                         | Whether to shuffle the training data.                                         |
-| `--aug_data`        | int   | 1        | 0, 1                         | Whether to use data augmentation during training.                             |
-| `--loss`            | str   | w_bce    | bce, w_bce, dice, mar, w_mar | Which loss function to use.                                                   |
-| `--batch_size`      | int   | 2        |                              | Batch size for training/testing.                                              |
-| `--initial_lr`      | float | 0.0001   |                              | Initial learning rate.                                                        |
-| `--slices`          | int   | 1        |                              | Number of slices to include for training/testing.                             |
-| `--subsamp`         | int   | -1       |                              | Number of slices to skip when forming 3D samples for training.                |
-| `--stride`          | int   | 1        |                              | Number of slices to move when generating the next sample.                     |
-| `--verbose`         | int   | 1        | 0, 1, 2                      | Set the verbose level for training output.                                    |
-| `--save_raw`        | int   | 1        | 0, 1                         | Whether to save the raw output.                                               |
-| `--save_seg`        | int   | 1        | 0, 1                         | Whether to save the segmented output.                                         |
-| `--save_prefix`     | str   |          |                              | Prefix to append to saved CSV files.                                          |
-| `--thresh_level`    | float | 0.0      |                              | Threshold level for segmentation; 0.0 for Otsu's method, otherwise set value. |
-| `--compute_dice`    | int   | 1        | 0, 1                         | Whether to compute the Dice coefficient.                                      |
-| `--compute_jaccard` | int   | 1        | 0, 1                         | Whether to compute the Jaccard index.                                         |
-| `--compute_assd`    | int   | 0        | 0, 1                         | Whether to compute the Average Symmetric Surface Distance.                    |
-| `--which_gpus`      | str   | 0        | -2, -1, or list of GPU IDs   | GPU settings: "-2" for CPU only, "-1" for all GPUs, or a list of GPU IDs.     |
-| `--gpus`            | int   | -1       |                              | Number of GPUs to use.                                                        |
-| `--num_splits`      | int   | 4        |                              | Number of data splits for cross-validation.                                   |
+| Argument            | Type  | Default  | Options                                | Description                                                                   |
+|---------------------|-------|----------|----------------------------------------|-------------------------------------------------------------------------------|
+| `--data_root_dir`   | str   | Required |                                        | The root directory for your data.                                             |
+| `--weights_path`    | str   |          |                                        | Path to the trained model weights. Set to "" if none.                         |
+| `--retrain`         | int   | 0        | 0, 1                                   | Whether to retrain the model from scratch.                                    |
+| `--epochs`          | int   | 20       |                                        | Number of epochs to train the model.                                          |
+| `--steps`           | int   | 1000     |                                        | Number of steps per epoch.                                                    |
+| `--split_num`       | int   | 0        |                                        | Which training split to train/test on.                                        |
+| `--net`             | str   | udet     | unet, udet, bifpn, udet_small_sized    | Choose your network architecture.                                             |
+| `--activation`      | str   | mish     | relu, mish                             | Activation function for the model.                                            |
+| `--train`           | int   | 0        | 0, 1                                   | Set to 1 to enable training mode.                                             |
+| `--test`            | int   | 0        | 0, 1                                   | Set to 1 to enable testing mode.                                              |
+| `--shuffle_data`    | int   | 1        | 0, 1                                   | Whether to shuffle the training data.                                         |
+| `--aug_data`        | int   | 1        | 0, 1                                   | Whether to use data augmentation during training.                             |
+| `--loss`            | str   | w_bce    | bce, w_bce, dice, mar, w_mar           | Which loss function to use.                                                   |
+| `--batch_size`      | int   | 2        |                                        | Batch size for training/testing.                                              |
+| `--initial_lr`      | float | 0.0001   |                                        | Initial learning rate.                                                        |
+| `--slices`          | int   | 1        |                                        | Number of slices to include for training/testing.                             |
+| `--subsamp`         | int   | -1       |                                        | Number of slices to skip when forming 3D samples for training.                |
+| `--stride`          | int   | 1        |                                        | Number of slices to move when generating the next sample.                     |
+| `--verbose`         | int   | 1        | 0, 1, 2                                | Set the verbose level for training output.                                    |
+| `--save_raw`        | int   | 1        | 0, 1                                   | Whether to save the raw output.                                               |
+| `--save_seg`        | int   | 1        | 0, 1                                   | Whether to save the segmented output.                                         |
+| `--save_prefix`     | str   |          |                                        | Prefix to append to saved CSV files.                                          |
+| `--thresh_level`    | float | 0.0      |                                        | Threshold level for segmentation; 0.0 for Otsu's method, otherwise set value. |
+| `--compute_dice`    | int   | 1        | 0, 1                                   | Whether to compute the Dice coefficient.                                      |
+| `--compute_jaccard` | int   | 1        | 0, 1                                   | Whether to compute the Jaccard index.                                         |
+| `--compute_assd`    | int   | 0        | 0, 1                                   | Whether to compute the Average Symmetric Surface Distance.                    |
+| `--which_gpus`      | str   | 0        | -2, -1, or list of GPU IDs             | GPU settings: "-2" for CPU only, "-1" for all GPUs, or a list of GPU IDs.     |
+| `--gpus`            | int   | -1       |                                        | Number of GPUs to use.                                                        |
+| `--num_splits`      | int   | 4        |                                        | Number of data splits for cross-validation.                                   |
 
 ## References
 

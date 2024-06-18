@@ -27,7 +27,7 @@ def calculate_averages(file_path):
         return 0, 0
 
 
-file_path = '../Data/results/unet/relu/split_1/dice_jacc_scores.csv'
+file_path = './Data/results/udet/small_sized/split_1/dice_jacc_scores.csv'
 average_dice, average_jaccard = calculate_averages(file_path)
 print(f"Average Dice Coefficient: {average_dice}")
 print(f"Average Jaccard Index: {average_jaccard}")
