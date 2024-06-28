@@ -132,7 +132,7 @@ This project utilizes concepts and code from several sources which have been ins
 - [U-Det: A modified U-Net architecture with bidirectional feature network for lung nodule segmentation](https://github.com/Nik-V9/U-Det)
 - [U-Net: Convolutional Networks for Biomedical Image Segmentation](https://arxiv.org/abs/1505.04597)
 - [RadIO: A library for data science research of computed tomography imaging](https://github.com/analysiscenter/radio)
-- [PlotNeuralNet: Latex code for making neural networks diagrams](https://github.com/mjribeiro/PlotNeuralNet/)
+- [PlotNeuralNet: Latex code for making neural networks diagrams](https://github.com/HarisIqbal88/PlotNeuralNet)
 
 ## Citation
 
