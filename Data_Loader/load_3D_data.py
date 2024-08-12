@@ -75,16 +75,6 @@ def load_class_weights(root, split):
         return value
 
 def split_data(root_path, num_splits):
-    """
-    Splits the dataset into training and testing sets based on the number of splits specified.
-
-    Args:
-    root_path (str): The root directory where the mask files are located.
-    num_splits (int): The number of splits to create. If num_splits is 1, the same index is used for both training and testing.
-
-    This function first collects all mask files from the specified directory, then divides them into the specified number of splits.
-    Each split's indices are saved into separate CSV files for training and testing datasets.
-    """
     mask_list = []
     for ext in ("*.mhd", "*.hdr", "*.nii", "*.npy"):
         mask_list.extend(sorted(glob(join(root_path, "masks", ext))))
@@ -111,21 +101,6 @@ def split_data(root_path, num_splits):
                         writer.writerow([os.path.basename(mask_list[i]).replace("masks_", "")])
 
 def convert_data_to_numpy(root_path, img_name, no_masks=False, overwrite=False):
-    """
-    Converts image and mask data from file formats to numpy arrays and saves them as compressed NPZ files.
-
-    Args:
-    root_path (str): The root directory where the image and mask files are located.
-    img_name (str): The name of the image file to be converted.
-    no_masks (bool, optional): If True, does not load or convert mask data. Default is False.
-    overwrite (bool, optional): If True, overwrites existing NPZ files. Default is False.
-
-    Returns:
-    tuple: A tuple containing numpy arrays for the image and mask, or just the image if no_masks is True.
-
-    This function checks if the NPZ files already exist and either loads them or creates them by loading the original image and mask files,
-    applying necessary transformations, and then saving them as compressed NPZ files.
-    """
     fname = img_name[:-4]
     numpy_path = join(root_path, "np_files")
     os.makedirs(join(numpy_path, "images"), exist_ok=True)

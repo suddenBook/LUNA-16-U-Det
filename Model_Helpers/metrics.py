@@ -283,11 +283,7 @@ def obj_tpr(result, reference, connectivity=1):
 
 def __distinct_binary_object_correspondences(reference, result, connectivity=1):
     """
-    Determines all distinct (where connectivity is defined by the connectivity parameter
-    passed to scipy's `generate_binary_structure`) binary objects in both of the input
-    parameters and returns a 1to1 mapping from the labelled objects in reference to the
-    corresponding (whereas a one-voxel overlap suffices for correspondence) objects in
-    result.
+    Determines all distinct (where connectivity is defined by the connectivity parameter passed to scipy's `generate_binary_structure`) binary objects in both of the input parameters and returns a 1-to-1 mapping from the labelled objects in reference to the corresponding (whereas a one-voxel overlap suffices for correspondence) objects in result.
     """
     result = np.atleast_1d(result.astype(np.bool_))
     reference = np.atleast_1d(reference.astype(np.bool_))
@@ -331,8 +327,7 @@ def __distinct_binary_object_correspondences(reference, result, connectivity=1):
     
 def __surface_distances(result, reference, voxelspacing=None, connectivity=1):
     """
-    The distances between the surface voxel of binary objects in result and their
-    nearest partner surface voxel of a binary object in reference.
+    The distances between the surface voxel of binary objects in result and their nearest partner surface voxel of a binary object in reference.
     """
     result = np.atleast_1d(result.astype(np.bool_))
     reference = np.atleast_1d(reference.astype(np.bool_))

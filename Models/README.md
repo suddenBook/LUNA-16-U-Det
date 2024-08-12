@@ -25,6 +25,10 @@ The U-Det Small-Sized model is a specialized variant of the U-Det model, designe
 - **Activation Function**: Utilizes the Mish activation function extensively to maintain smooth gradients, which is beneficial for learning fine details without the risk of losing important features during training.
 - **Output Layers**: The output layers are designed to provide precise localization of small-sized nodules, using higher resolution feature maps from earlier stages of the network.
 
+### U-Det Mixed Method
+
+The U-Det Mixed method is a hybrid approach that combines the U-Det and U-Det Small-Sized models to improve the performance of lung nodule detection during the testing phase. This method leverages the strengths of both models: U-Det performs better in detecting larger nodules, while U-Det Small-Sized excels in detecting smaller nodules.
+
 ### Bi-FPN (Bidirectional Feature Pyramid Network)
 
 Bi-FPN enhances the multi-scale feature learning by allowing easy and fast multi-scale feature fusion.

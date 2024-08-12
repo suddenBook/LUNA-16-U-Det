@@ -11,7 +11,7 @@ import numpy as np
 from load_3D_data import load_data, split_data
 from model_helper import create_model
 from train import train
-from test import test
+from test import test, test_udet_mixed
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train and test a 3D medical image segmentation model.", epilog="Example usage: python main.py --data_root_dir /path/to/data --train 1 --net udet --epochs 30")
@@ -21,7 +21,7 @@ def parse_args():
     parser.add_argument("--epochs", type=int, default=20)
     parser.add_argument("--steps", type=int, default=1000)
     parser.add_argument("--split_num", type=int, default=0, help="Which training split to train/test on.")
-    parser.add_argument("--net", type=str.lower, default="udet", choices=["unet", "udet", "bifpn", "udet_small_sized"], help="Choose your network.")
+    parser.add_argument("--net", type=str.lower, default="udet", choices=["unet", "udet", "bifpn", "udet_small_sized", "udet_mixed"], help="Choose your network.")
     parser.add_argument("--train", type=int, default=0, choices=[0,1], help="Set to 1 to enable training.")
     parser.add_argument("--test", type=int, default=0, choices=[0,1], help="Set to 1 to enable testing.")
     parser.add_argument("--shuffle_data", type=int, default=1, choices=[0,1], help="Whether to shuffle the training data.")
@@ -44,6 +44,8 @@ def parse_args():
     parser.add_argument("--gpus", type=int, default=-1, help="Number of GPUs to use.")
     parser.add_argument("--num_splits", type=int, default=4)
     parser.add_argument("--activation", type=str.lower, default="mish", choices=["relu", "mish"], help="Choose the activation function for the model.")
+    parser.add_argument("--udet_weights", type=str, default="", help="[For U-Det Mixed method only] Path to the pre-trained weights for the U-Det model.")
+    parser.add_argument("--udet_small_sized_weights", type=str, default="", help="[For U-Det Mixed method only] Path to the pre-trained weights for the U-Det Small-Sized model.")
     return parser.parse_args()
 
 def load_train_val_test(args):
@@ -106,10 +108,17 @@ def main(args):
         )
         
     if args.train:
-        train(args, train_list, val_list, model, net_input_shape)
+        if args.net == "udet_mixed":
+            print("U-Det Mixed method does not support training. It only works in test mode by combining U-Det and U-Det Small-Sized models.")
+            return
+        else:
+            train(args, train_list, val_list, model, net_input_shape)
         
     if args.test:
-        test(args, test_list, model_list, net_input_shape)
+        if args.net == "udet_mixed":
+            test_udet_mixed(args, test_list, model_list, net_input_shape, args.udet_weights, args.udet_small_sized_weights)
+        else:
+            test(args, test_list, model_list, net_input_shape)
 
 if __name__ == "__main__":
     args = parse_args()

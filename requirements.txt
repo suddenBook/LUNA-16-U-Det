@@ -12,3 +12,4 @@ seaborn
 blosc
 scikit-learn
 scikit-image
+metrics

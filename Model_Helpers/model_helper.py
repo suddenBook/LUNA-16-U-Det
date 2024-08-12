@@ -17,6 +17,10 @@ def create_model(args, input_shape):
         elif args.net == "udet_small_sized":
             from Models.UDet_small_sized import UDet_small_sized
             return [UDet_small_sized(input_shape)]
+        elif args.net == "udet_mixed":
+            from Models.UDet import UDet
+            from Models.UDet_small_sized import UDet_small_sized
+            return [UDet(input_shape, args.activation == "mish"), UDet_small_sized(input_shape)]
         else:
             raise ValueError(f"Unknown network type: {args.net}")
     else:  # Multiple GPUs

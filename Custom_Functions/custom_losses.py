@@ -5,9 +5,7 @@ sys.path.extend(['./','../','../Models/','../Data_Loader/','../Model_Helpers/'])
 
 def dice_soft(y_true, y_pred, loss_type="sorensen", axis=(1, 2, 3), smooth=1e-5, from_logits=False):
     """
-    Soft dice (Sørensen or Jaccard) coefficient for comparing the similarity
-    of two batch of data, usually be used for binary image segmentation
-    i.e. labels are binary. The coefficient between 0 to 1, 1 means totally match.
+    Soft dice (Sørensen or Jaccard) coefficient for comparing the similarity of two batch of data, usually be used for binary image segmentation i.e. labels are binary. The coefficient between 0 to 1, 1 means totally match.
     
     https://en.wikipedia.org/wiki/Dice-S%C3%B8rensen_coefficient
     """
@@ -33,8 +31,7 @@ def dice_soft(y_true, y_pred, loss_type="sorensen", axis=(1, 2, 3), smooth=1e-5,
 
 def dice_hard(y_true, y_pred, threshold=0.5, axis=(1, 2, 3), smooth=1e-5):
     """
-    Non-differentiable Sørensen–Dice coefficient for comparing the similarity
-    of two batch of data, usually be used for binary image segmentation i.e. labels are binary.
+    Non-differentiable Sørensen–Dice coefficient for comparing the similarity of two batch of data, usually be used for binary image segmentation i.e. labels are binary.
     The coefficient between 0 to 1, 1 if totally match.
     """
     y_pred = tf.cast(y_pred > threshold, tf.float32)
