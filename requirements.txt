@@ -13,3 +13,4 @@ blosc
 scikit-learn
 scikit-image
 metrics
+opencv-python
