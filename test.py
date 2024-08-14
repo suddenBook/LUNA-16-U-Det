@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
 plt.ioff()
-from tensorflow.keras import backend as K
+from tensorflow.python.keras import backend as K
 K.set_image_data_format("channels_last")
 import os
 import csv
@@ -16,8 +16,8 @@ import numpy as np
 import scipy.ndimage.morphology
 from skimage import measure, filters
 import SimpleITK as sitk
-from metrics import dc, jc, assd
-from load_3D_data import generate_test_batches
+from Model_Helpers.metrics import dc, jc, assd
+from Data_Loader.load_3D_data import generate_test_batches
 import logging
 from scipy.spatial import distance
 

@@ -1,5 +1,5 @@
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Conv2DTranspose
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Conv2DTranspose
 import tensorflow_addons as tfa
 
 import sys

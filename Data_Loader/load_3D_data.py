@@ -8,7 +8,7 @@ from numpy.random import shuffle
 import SimpleITK as sitk
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
-import tensorflow.keras.preprocessing.image as preprocess
+import keras.preprocessing.image as preprocess
 import matplotlib.pyplot as plt
 import threading
 

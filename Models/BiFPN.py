@@ -1,7 +1,7 @@
 from functools import reduce
-from tensorflow.keras import layers
-from tensorflow.keras import initializers
-from tensorflow.keras import models
+from tensorflow.python.keras import layers
+from tensorflow.python.keras import initializers
+from tensorflow.python.keras import models
 
 import sys
 sys.path.extend(['./','../','../Model_Helpers/','../Data_Loader/','../Custom_Functions/'])

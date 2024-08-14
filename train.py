@@ -9,13 +9,13 @@ import matplotlib.pyplot as plt
 plt.ioff()
 import os
 import numpy as np
-from tensorflow.keras.optimizers.legacy import Adam  
-from tensorflow.keras import backend as K
+from tensorflow.python.keras.optimizers import Adam  
+from tensorflow.python.keras import backend as K
 K.set_image_data_format("channels_last")
-from tensorflow.keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping, ReduceLROnPlateau, TensorBoard
+from tensorflow.python.keras.callbacks import ModelCheckpoint, CSVLogger, EarlyStopping, ReduceLROnPlateau, TensorBoard
 import tensorflow as tf
-from custom_losses import dice_hard, weighted_binary_crossentropy_loss, dice_loss, margin_loss
-from load_3D_data import load_class_weights, generate_train_batches, generate_val_batches
+from Custom_Functions.custom_losses import dice_hard, weighted_binary_crossentropy_loss, dice_loss, margin_loss
+from Data_Loader.load_3D_data import load_class_weights, generate_train_batches, generate_val_batches
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 

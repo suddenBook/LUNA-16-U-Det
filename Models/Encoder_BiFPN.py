@@ -1,8 +1,8 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Conv2D, MaxPooling2D
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.layers import Input, Conv2D, MaxPooling2D
 from BiFPN import build_BiFPN
 
 import sys

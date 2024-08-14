@@ -1,9 +1,9 @@
 import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Conv2DTranspose, Dropout, UpSampling2D, add
-from tensorflow.keras.layers import GlobalAveragePooling2D, Reshape, Dense, Permute, multiply, Activation
+from tensorflow.python.keras.models import Model
+from tensorflow.python.keras.layers import Input, concatenate, Conv2D, MaxPooling2D, Conv2DTranspose, Dropout, UpSampling2D, add
+from tensorflow.python.keras.layers import GlobalAveragePooling2D, Reshape, Dense, Permute, multiply, Activation
 from BiFPN import build_BiFPN
 
 def conv_block(inputs, num_filters, kernel_size=3):
