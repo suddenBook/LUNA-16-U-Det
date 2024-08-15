@@ -8,8 +8,8 @@ import argparse
 import SimpleITK as sitk
 from time import gmtime, strftime
 import numpy as np
-from load_3D_data import load_data, split_data
-from model_helper import create_model
+from Data_Loader.load_3D_data import load_data, split_data
+from Model_Helpers.model_helper import create_model
 from train import train
 from test import test, test_udet_mixed
 
